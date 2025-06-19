@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Penganggaran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS (xlsx.js) untuk membaca/menulis Excel (.xlsx) -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%; /* Memastikan html dan body mengambil tinggi penuh */
+        }
+        body {
+            font-family: 'Inter', sans-serif; /* Menggunakan font Inter */
+        }
+        /* Custom checkbox styling for multi-select (square) */
+        input[type="checkbox"].transaction-select-checkbox {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border: 2px solid #ccc;
+            border-radius: 4px; /* Persegi */
+            cursor: pointer;
+            position: relative;
+            top: 2px;
+            transition: all 0.2s ease-in-out;
+            flex-shrink: 0; /* Ensures checkbox doesn't shrink */
+        }
+
+        input[type="checkbox"].transaction-select-checkbox:checked {
+            background-color: #3b82f6; /* Biru-500 */
+            border-color: #3b82f6;
+        }
+
+        input[type="checkbox"].transaction-select-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        /* Custom scrollbar styling (optional, for better aesthetics) */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Custom CSS to remove outlines and insertion points for non-input elements */
+        /* Remove outline for all elements by default */
+        *:focus {
+            outline: none;
+        }
+        /* Hide caret for non-input elements */
+        body {
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+ */
+            user-select: none; /* Standard syntax */
+        }
+        /* Allow text selection and caret for specific input types and textareas */
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        /* Add outline back specifically for text inputs and textareas on focus */
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        textarea:focus {
+            outline: 2px solid #3b82f6; /* Blue outline for focus */
+            outline-offset: 2px; /* Offset the outline slightly */
+        }
+    </style>
+</head>
+<!-- Body uses responsive classes for full height and content alignment in the center -->
+<!-- Padding on body ensures overall spacing, no white box needed -->
+<body class="bg-gradient-to-br from-blue-400 to-purple-600 h-screen flex items-center justify-center p-4 sm:p-8 relative">
+
+    <!-- Removed the main application container (the white box) -->
+    <!-- The content is now directly within the body's flex container -->
+
+    <div class="flex-grow flex relative h-full w-full max-w-5xl mx-auto flex-col overflow-hidden">
+        <!-- Budget View - Adjusted to fill the space and provide its own background/styling -->
+        <!-- Added bg-white, rounded-xl, and shadow-2xl directly to budgetView -->
+        <div id="budgetView" class="flex-grow flex flex-col h-full py-4 px-6 sm:px-8 bg-white rounded-xl shadow-2xl"> 
+            <!-- Adjusting main title font size for smaller screens -->
+            <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6 flex-shrink-0">Penganggaran</h2>
+            <div class="bg-blue-100 p-4 sm:p-6 rounded-xl shadow-md mb-4 sm:mb-6 flex-shrink-0">
+                <!-- Adjusting balance text sizes for smaller screens -->
+                <p class="text-md sm:text-xl text-gray-700 mb-1 sm:mb-2">Saldo Saat Ini:</p>
+                <p id="currentBalance" class="text-3xl sm:text-5xl font-bold text-blue-800">Rp 0</p>
+            </div>
+
+            <!-- User ID display (no longer associated with Firebase Auth) -->
+            <div id="authSection" class="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 flex-shrink-0">
+                <div id="userIdDisplay" class="text-gray-500 text-xs truncate w-full text-center sm:text-left mb-2 sm:mb-0" title="User ID"></div>
+            </div>
+
+            <!-- Button container: Changed justify-end to justify-between for better spacing on mobile -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4 flex-shrink-0">
+                <button id="exportBudgetButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-1 active:scale-95 w-full sm:w-auto text-sm">
+                    Export ke Excel
+                </button>
+                <button id="addTransactionButton" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:-translate-y-1 active:scale-95 w-full sm:w-auto text-sm">
+                    Tambah Transaksi
+                </button>
+            </div>
+
+            <!-- BEGIN REVISED STRUCTURE FOR FIXED C AND SCROLLABLE X -->
+            <!-- This div will manage the remaining height and act as a column flex container -->
+            <div class="flex-grow flex flex-col"> 
+                <!-- Area C (Fixed part - now natural flow) -->
+                <!-- 'flex-shrink-0' prevents this element from shrinking and ensures its height remains. -->
+                <!-- Removed px- classes as budgetView handles overall padding -->
+                <div id="fixedTransactionControls" class="bg-white pb-0 flex-shrink-0">
+                    <!-- Search Input for Transactions -->
+                    <!-- 'w-full' ensures the input takes full available width. -->
+                    <input
+                        type="text"
+                        id="transactionSearchInput"
+                        placeholder="Cari transaksi..."
+                        class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 mb-3 text-sm"
+                        aria-label="Cari transaksi"
+                    >
+
+                    <!-- Multi-select and Action Buttons for Transactions -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
+                        <label class="flex items-center cursor-pointer w-full sm:w-auto">
+                            <input type="checkbox" id="selectAllTransactionsCheckbox" class="transaction-select-checkbox h-5 w-5 rounded">
+                            <span class="ml-2 text-gray-700 text-sm">Pilih Semua</span>
+                        </label>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="editSelectedButton" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-grow sm:flex-none">
+                                Edit Terpilih
+                            </button>
+                            <button id="deleteSelectedTransactionsButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-grow sm:flex-none">
+                                Hapus Terpilih
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Adjusting title font size for smaller screens -->
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Histori Transaksi</h3>
+                </div>
+
+                <!-- Area X (Scrollable part - now flex-grow and h-0) -->
+                <!-- 'overflow-y-auto' enables vertical scrolling. 'flex-grow' ensures this part takes the remaining available space. -->
+                <!-- 'h-0' is important in a flex-col context for 'flex-grow' to work correctly, as it defines the base height before growing. -->
+                <!-- Removed px- classes as budgetView handles overall padding -->
+                <div id="scrollableTransactionList" class="overflow-y-auto flex-grow h-0 pt-0">
+                    <ul id="transactionList" class="space-y-2 sm:space-y-3">
+                        <!-- Transaction items will be rendered here by JavaScript -->
+                        <!-- Adjusted padding for list items -->
+                    </ul>
+                    <p id="noTransactionsMessage" class="text-gray-500 text-center mt-8 hidden"></p>
+                </div>
+            </div>
+            <!-- END REVISED STRUCTURE -->
+        </div>
+
+        <!-- Modals (Remain outside the main view for proper overlay) -->
+        <!-- Modals use 'fixed inset-0' to cover the entire screen, 'flex items-center justify-center' for centering. -->
+        <!-- Modal content uses 'max-w-sm' to limit width on large screens and 'mx-auto' for centering. -->
+        <!-- Adjusted padding for modal content for smaller screens -->
+        <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-[101] modal">
+            <div class="bg-white p-5 sm:p-8 rounded-xl shadow-2xl w-full max-w-sm mx-auto">
+                <!-- Adjusted modal title font size -->
+                <h3 id="transactionModalTitle" class="text-xl sm:text-2xl font-bold text-gray-800 mb-5 sm:mb-6">Tambah Transaksi</h3>
+                <!-- Adjusted input/select padding and font size for smaller screens -->
+                <select id="transactionTypeInput" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base" aria-label="Jenis transaksi">
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+                <input
+                    type="number"
+                    id="transactionAmountInput"
+                    placeholder="Jumlah (Rp)"
+                    class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base"
+                    aria-label="Jumlah transaksi"
+                    step="0.01"
+                    min="0"
+                >
+                <input
+                    type="text"
+                    id="transactionDescriptionInput"
+                    placeholder="Deskripsi (misal: Gaji, Belanja Makanan)"
+                    class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base"
+                    aria-label="Deskripsi transaksi"
+                >
+                <input
+                    type="date"
+                    id="transactionDateInput"
+                    class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 mb-5 sm:mb-6 text-sm sm:text-base"
+                    aria-label="Tanggal transaksi"
+                >
+                <div class="flex justify-end space-x-2 sm:space-x-3">
+                    <!-- Adjusted button font size for modals -->
+                    <button id="cancelTransactionButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 text-sm">Batal</button>
+                    <button id="confirmTransactionButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 text-sm">Simpan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Budget Modal - Updated for Date Range -->
+        <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-[101] modal">
+            <div class="bg-white p-5 sm:p-8 rounded-xl shadow-2xl w-full max-w-md mx-auto">
+                <!-- Adjusted modal title font size -->
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 mb-5 sm:mb-6">Pilih Rentang Tanggal untuk Ekspor</h3>
+                
+                <div class="mb-3 sm:mb-4">
+                    <label for="exportStartDateInput" class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2">Tanggal Mulai:</label>
+                    <!-- Adjusted input padding and font size for smaller screens -->
+                    <input
+                        type="date"
+                        id="exportStartDateInput"
+                        class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 text-sm sm:text-base"
+                        aria-label="Tanggal mulai ekspor"
+                    >
+                </div>
+
+                <div class="mb-5 sm:mb-6">
+                    <label for="exportEndDateInput" class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2">Tanggal Akhir:</label>
+                    <!-- Adjusted input padding and font size for smaller screens -->
+                    <input
+                        type="date"
+                        id="exportEndDateInput"
+                        class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-700 text-sm sm:text-base"
+                        aria-label="Tanggal akhir ekspor"
+                    >
+                </div>
+
+                <div class="flex justify-end space-x-2 sm:space-x-3">
+                    <!-- Adjusted button font size for modals -->
+                    <button id="cancelExportButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 text-sm">Batal</button>
+                    <button id="confirmExportButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded-lg transition-all duration-200 text-sm">Ekspor</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjusted message box font size -->
+        <div id="messageBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white py-2 px-4 rounded-lg shadow-lg text-center opacity-0 transition-opacity duration-300 pointer-events-none text-sm" style="z-index: 1000;">
+            Pesan Anda di sini!
+        </div>
+    </div>
+
+    <script type="module">
+        // Removed all Firebase SDK imports.
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Removed Firebase config and initialization
+        // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // const app = initializeApp(firebaseConfig);
+        // const auth = getAuth(app);
+        // const db = getFirestore(app);
+
+        // Global variables for budget data
+        // No currentUser, all data local
+        let budgetTransactions = []; // Stores all budget transactions for the current user
+
+        // Generate a session ID to act as a unique identifier for local storage, persisting across reloads within the same session
+        let sessionId = sessionStorage.getItem('budgetSessionId');
+        if (!sessionId) {
+            sessionId = crypto.randomUUID();
+            sessionStorage.setItem('budgetSessionId', sessionId);
+        }
+
+        // --- DOM Element References ---
+        const budgetView = document.getElementById('budgetView');
+        const currentBalance = document.getElementById('currentBalance');
+        const addTransactionButton = document.getElementById('addTransactionButton');
+        const transactionList = document.getElementById('transactionList');
+        const noTransactionsMessage = document.getElementById('noTransactionsMessage');
+        
+        // Elements after restructuring
+        const fixedTransactionControls = document.getElementById('fixedTransactionControls');
+        const scrollableTransactionList = document.getElementById('scrollableTransactionList');
+
+        const messageBox = document.getElementById('messageBox');
+
+        // Modals
+        const addEditTransactionModal = document.getElementById('addEditTransactionModal');
+        const transactionModalTitle = document.getElementById('transactionModalTitle');
+        const transactionTypeInput = document.getElementById('transactionTypeInput');
+        const transactionAmountInput = document.getElementById('transactionAmountInput');
+        const transactionDescriptionInput = document.getElementById('transactionDescriptionInput');
+        const transactionDateInput = document.getElementById('transactionDateInput');
+        const cancelTransactionButton = document.getElementById('cancelTransactionButton');
+        const confirmTransactionButton = document.getElementById('confirmTransactionButton');
+
+        // References for elements moved into fixedTransactionControls
+        const transactionSearchInput = fixedTransactionControls.querySelector('#transactionSearchInput');
+        const selectAllTransactionsCheckbox = fixedTransactionControls.querySelector('#selectAllTransactionsCheckbox'); 
+        const deleteSelectedTransactionsButton = document.getElementById('deleteSelectedTransactionsButton'); // Get by ID directly
+        const editSelectedButton = document.getElementById('editSelectedButton'); // Get by ID directly
+
+
+        // Export elements
+        const exportBudgetButton = document.getElementById('exportBudgetButton');
+        const exportBudgetModal = document.getElementById('exportBudgetModal');
+        const exportStartDateInput = document.getElementById('exportStartDateInput');
+        const exportEndDateInput = document.getElementById('exportEndDateInput');
+        const cancelExportButton = document.getElementById('cancelExportButton');
+        const confirmExportButton = document.getElementById('confirmExportButton');
+
+        // User ID display (now local session ID)
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        userIdDisplay.textContent = `ID Sesi: ${sessionId}`;
+
+
+        // --- Global State ---
+        let editingTransactionId = null; // For editing transactions
+
+        // Multi-select status
+        let selectedTransactions = []; // Stores transaction IDs
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a temporary message on the screen.
+         * @param {string} message - The message to display.
+         * @param {string} type - The message type ('success' or 'error').
+         */
+        function showMessage(message, type = 'error') {
+            messageBox.textContent = message;
+            if (type === 'error') {
+                messageBox.classList.remove('bg-green-600');
+                messageBox.classList.add('bg-red-600');
+            } else {
+                messageBox.classList.remove('bg-red-600');
+                messageBox.classList.add('bg-green-600');
+            }
+            messageBox.classList.remove('opacity-0', 'pointer-events-none');
+            messageBox.classList.add('opacity-100');
+
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        /**
+         * Generates a unique ID for transactions (UUID v4 style).
+         * @returns {string} Unique ID.
+         */
+        function generateUniqueId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        /**
+         * Formats a number into Rupiah currency format.
+         * @param {number} amount - The amount.
+         * @returns {string} Currency formatted string.
+         */
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        /**
+         * Converts a date string (YYYY-MM-DD) to a readable Indonesian date.
+         * @param {string} dateString - Date string in YYYY-MM-DD format.
+         * @returns {string} Readable date string.
+         */
+        function getReadableDate(dateString) {
+            if (!dateString) return '';
+            return new Date(dateString).toLocaleDateString('id-ID', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+        }
+
+        /**
+         * Formats a Date object to YYYY-MM-DD string.
+         * @param {Date} dateObj - Date object.
+         * @returns {string} Date in YYYY-MM-DD format.
+         */
+        function formatDateToYYYYMMDD(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const day = dateObj.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // --- Local Storage Functions ---
+
+        /**
+         * Loads transactions from localStorage.
+         */
+        function loadTransactionsFromLocalStorage() {
+            const storedTransactions = localStorage.getItem(`budgetTransactions_${sessionId}`);
+            if (storedTransactions) {
+                budgetTransactions = JSON.parse(storedTransactions);
+            } else {
+                budgetTransactions = [];
+            }
+            renderBudget();
+            showMessage('Data transaksi dimuat dari penyimpanan lokal.', 'success');
+        }
+
+        /**
+         * Saves current transactions to localStorage.
+         */
+        function saveTransactionsToLocalStorage() {
+            localStorage.setItem(`budgetTransactions_${sessionId}`, JSON.stringify(budgetTransactions));
+            showMessage('Data transaksi disimpan ke penyimpanan lokal.', 'success');
+        }
+
+        // --- Transaction Management Functions (Local) ---
+
+        /**
+         * Saves a new transaction or edits an existing one.
+         */
+        function saveTransaction() {
+            const type = transactionTypeInput.value;
+            const amount = parseFloat(transactionAmountInput.value);
+            const description = transactionDescriptionInput.value.trim();
+            const date = transactionDateInput.value;
+
+            if (isNaN(amount) || amount <= 0 || description === '' || date === '') {
+                showMessage('Jumlah, deskripsi, dan tanggal transaksi harus diisi dengan benar!', 'error');
+                return;
+            }
+
+            if (editingTransactionId) {
+                // Edit existing transaction
+                const index = budgetTransactions.findIndex(t => t.id === editingTransactionId);
+                if (index !== -1) {
+                    budgetTransactions[index] = {
+                        ...budgetTransactions[index],
+                        type: type,
+                        amount: amount,
+                        description: description,
+                        date: date
+                    };
+                    showMessage('Transaksi berhasil diperbarui!', 'success');
+                }
+            } else {
+                // Add new transaction
+                const newTransaction = {
+                    id: generateUniqueId(),
+                    type: type,
+                    amount: amount,
+                    description: description,
+                    date: date,
+                    createdAt: new Date().toISOString()
+                };
+                budgetTransactions.push(newTransaction);
+                showMessage('Transaksi berhasil ditambahkan!', 'success');
+            }
+            saveTransactionsToLocalStorage(); // Persist changes
+            renderBudget(); // Re-render UI
+            hideAddEditTransactionModal();
+        }
+
+        /**
+         * Deletes a transaction.
+         * @param {string} transactionIdToDelete - ID of the transaction to delete.
+         */
+        function deleteTransaction(transactionIdToDelete) {
+            budgetTransactions = budgetTransactions.filter(t => t.id !== transactionIdToDelete);
+            saveTransactionsToLocalStorage(); // Persist changes
+            renderBudget(); // Re-render UI
+            showMessage('Transaksi berhasil dihapus!', 'success');
+        }
+
+        /**
+         * Handles the click of the "Edit Terpilih" button.
+         * This button now relies on `selectedTransactions` being populated by checkboxes.
+         */
+        function handleEditSelectedButton() {
+            if (selectedTransactions.length === 0) {
+                showMessage('Pilih setidaknya satu transaksi untuk diedit.', 'error');
+                return;
+            }
+            if (selectedTransactions.length > 1) {
+                showMessage('Untuk pengeditan, harap pilih hanya satu transaksi.', 'error');
+                return;
+            }
+            showAddEditTransactionModal(selectedTransactions[0]); // Open modal for editing the selected transaction
+            selectedTransactions = []; // Clear selection after opening edit modal
+            renderBudget(); // Re-render to clear checkboxes
+        }
+
+
+        /**
+         * Deletes all selected transactions.
+         * This button is for the main "Hapus Terpilih", acting on ALL selected.
+         */
+        function deleteSelectedTransactions() {
+            if (selectedTransactions.length === 0) {
+                showMessage('Tidak ada transaksi yang dipilih untuk dihapus.', 'error');
+                return;
+            }
+
+            // Using confirm dialog replacement
+            const confirmMessage = 'Apakah Anda yakin ingin menghapus ' + selectedTransactions.length + ' transaksi terpilih?';
+            showMessage(confirmMessage, 'error'); // Displaying as error to grab attention for confirmation
+            
+            budgetTransactions = budgetTransactions.filter(t => !selectedTransactions.includes(t.id));
+            selectedTransactions = []; // Clear selected after successful deletion
+            saveTransactionsToLocalStorage(); // Persist changes
+            renderBudget(); // Re-render UI
+            showMessage('Transaksi terpilih berhasil dihapus!', 'success');
+        }
+
+        // --- Budgeting Feature Functions ---
+
+        /**
+         * Calculates the total balance from transactions.
+         * @returns {number} Total balance.
+         */
+        function calculateBalance() {
+            return budgetTransactions.reduce((total, transaction) => {
+                return transaction.type === 'income' ? total + transaction.amount : total - transaction.amount;
+            }, 0);
+        }
+
+        /**
+         * Renders the transaction list and updates the balance.
+         */
+        function renderBudget() {
+            transactionList.innerHTML = '';
+            const balance = calculateBalance();
+            currentBalance.textContent = formatRupiah(balance);
+
+            const searchTerm = transactionSearchInput.value.toLowerCase();
+
+            const filteredTransactions = budgetTransactions.filter(transaction =>
+                transaction.description.toLowerCase().includes(searchTerm)
+            ).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+
+            if (filteredTransactions.length === 0) {
+                noTransactionsMessage.classList.remove('hidden');
+                noTransactionsMessage.textContent = 'Tidak ada transaksi.'; // Updated message
+            } else {
+                noTransactionsMessage.classList.add('hidden');
+                filteredTransactions.forEach(transaction => {
+                    const listItem = createTransactionElement(transaction);
+                    transactionList.appendChild(listItem);
+                });
+            }
+            updateActionButtonsState(); // Call updated function to update visibility/state
+        }
+
+        /**
+         * Handler for individual transaction checkboxes (for multi-select).
+         */
+        function handleTransactionCheckboxChange(event) {
+            const checkbox = event.target;
+            const transactionId = checkbox.dataset.transactionId;
+
+            if (checkbox.checked) {
+                selectedTransactions.push(transactionId);
+            } else {
+                selectedTransactions = selectedTransactions.filter(id => id !== transactionId);
+            }
+            updateActionButtonsState(); // Update action buttons
+        }
+
+        /**
+         * Updates the visibility and disabled state of the action buttons (Edit Terpilih, Hapus Terpilih).
+         */
+        function updateActionButtonsState() {
+            const numSelected = selectedTransactions.length;
+            if (numSelected === 1) {
+                editSelectedButton.disabled = false;
+                deleteSelectedTransactionsButton.disabled = false;
+            } else if (numSelected > 1) {
+                editSelectedButton.disabled = true; // Disable edit if multiple selected
+                deleteSelectedTransactionsButton.disabled = false; // Allow delete for multiple
+            } else {
+                editSelectedButton.disabled = true;
+                deleteSelectedTransactionsButton.disabled = true;
+            }
+            // Ensure selectAllTransactionsCheckbox is updated too
+            const searchTerm = transactionSearchInput.value.toLowerCase();
+            const currentFilteredTransactions = budgetTransactions.filter(transaction =>
+                transaction.description.toLowerCase().includes(searchTerm)
+            );
+            if (currentFilteredTransactions.length > 0) {
+                const allTransactionsSelected = currentFilteredTransactions.every(transaction =>
+                    selectedTransactions.includes(transaction.id)
+                );
+                selectAllTransactionsCheckbox.checked = allTransactionsSelected;
+            } else {
+                selectAllTransactionsCheckbox.checked = false;
+            }
+        }
+
+
+        /**
+         * Toggles selection of all transactions.
+         * @param {boolean} isChecked - True to select all, false to deselect all.
+         */
+        function toggleAllTransactions(isChecked) {
+            const searchTerm = transactionSearchInput.value.toLowerCase();
+            const visibleTransactions = budgetTransactions.filter(transaction =>
+                transaction.description.toLowerCase().includes(searchTerm)
+            );
+            
+            selectedTransactions = [];
+            if (isChecked) {
+                visibleTransactions.forEach(transaction => selectedTransactions.push(transaction.id));
+            }
+            renderBudget(); // Re-render to update checkboxes
+            updateActionButtonsState(); // Update action buttons
+        }
+
+        /**
+         * Creates a DOM element for a single transaction.
+         * @param {object} transactionData - Transaction object.
+         * @returns {HTMLElement} Transaction li element.
+         */
+        function createTransactionElement(transactionData) {
+            const listItem = document.createElement('li');
+            const typeClass = transactionData.type === 'income' ? 'text-green-600' : 'text-red-600';
+            const sign = transactionData.type === 'income' ? '+' : ''; // Only add '+' for income, '-' will be handled by negative value or class
+
+            // Adjusted horizontal padding for list items
+            // Increased px- class from px-2 to px-3 for more padding on mobile list items.
+            listItem.className = `p-2 sm:p-4 bg-gray-50 rounded-lg shadow-sm flex items-center transition-all duration-200 hover:bg-gray-100 cursor-pointer px-3 sm:px-4`;
+
+            // Add checkbox for multi-select
+            const multiSelectCheckbox = document.createElement('input');
+            multiSelectCheckbox.type = 'checkbox';
+            multiSelectCheckbox.className = 'transaction-select-checkbox h-4 w-4 rounded mr-1 sm:mr-4';
+            multiSelectCheckbox.checked = selectedTransactions.includes(transactionData.id);
+            multiSelectCheckbox.dataset.transactionId = transactionData.id;
+            multiSelectCheckbox.addEventListener('change', handleTransactionCheckboxChange);
+            listItem.appendChild(multiSelectCheckbox);
+
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex-1';
+            // Adjusted font size for description and date on mobile to prevent overflow
+            // Changed text-sm to text-xs on description for smaller screens to ensure it fits without overflowing.
+            contentDiv.innerHTML = `
+                <p class="text-xs sm:text-lg font-semibold text-gray-800">${transactionData.description}</p>
+                <p class="text-xs sm:text-sm text-gray-500">${getReadableDate(transactionData.date)}</p>
+            `;
+            listItem.appendChild(contentDiv);
+
+            const amountDiv = document.createElement('div');
+            // Adjusted font size for amount on mobile
+            // Changed text-sm to text-xs on amount for smaller screens to ensure it fits without overflowing.
+            amountDiv.className = `text-xs sm:text-lg font-bold ${typeClass}`;
+            amountDiv.textContent = `${sign} ${formatRupiah(transactionData.amount).replace('Rp', '')}`;
+            listItem.appendChild(amountDiv);
+
+            return listItem;
+        }
+
+        /**
+         * Shows the add/edit transaction modal.
+         * @param {string|null} transactionId - ID of the transaction to edit, or null if adding new.
+         */
+        function showAddEditTransactionModal(transactionId = null) {
+            // No need for currentUser check as there is no Firebase Auth
+            editingTransactionId = transactionId;
+            transactionAmountInput.value = '';
+            transactionDescriptionInput.value = '';
+            transactionDateInput.value = new Date().toISOString().split('T')[0]; // Default to today
+
+            if (transactionId) {
+                transactionModalTitle.textContent = 'Edit Transaksi';
+                const transaction = budgetTransactions.find(t => t.id === transactionId);
+                if (transaction) {
+                    transactionTypeInput.value = transaction.type;
+                    transactionAmountInput.value = transaction.amount;
+                    transactionDescriptionInput.value = transaction.description;
+                    transactionDateInput.value = transaction.date;
+                }
+            } else {
+                transactionModalTitle.textContent = 'Tambah Transaksi';
+                transactionTypeInput.value = 'expense'; // Default to expense for new transactions
+            }
+            addEditTransactionModal.classList.remove('hidden');
+            transactionAmountInput.focus();
+        }
+
+        /**
+         * Hides the add/edit transaction modal.
+         */
+        function hideAddEditTransactionModal() {
+            addEditTransactionModal.classList.add('hidden');
+            editingTransactionId = null;
+        }
+
+        // --- Export to Excel (.xlsx) Functions ---
+
+        /**
+         * Shows the date range selection modal for export.
+         */
+        function showExportBudgetModal() {
+            if (budgetTransactions.length === 0) { // Removed currentUser check
+                showMessage('Tidak ada data untuk diekspor.', 'error');
+                return;
+            }
+            // Set default dates for the modal (e.g., this month)
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            exportStartDateInput.value = formatDateToYYYYMMDD(firstDayOfMonth);
+            exportEndDateInput.value = formatDateToYYYYMMDD(lastDayOfMonth);
+
+            exportBudgetModal.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the date range selection modal for export.
+         */
+        function hideExportBudgetModal() {
+            exportBudgetModal.classList.add('hidden');
+        }
+
+        /**
+         * Exports transactions to an Excel (.xlsx) file with formatting.
+         */
+        function exportTransactionsToXlsx() {
+            // No currentUser check needed
+            const startDateString = exportStartDateInput.value;
+            const endDateString = exportEndDateInput.value;
+
+            if (!startDateString || !endDateString) {
+                showMessage('Harap pilih tanggal mulai dan tanggal akhir untuk ekspor!', 'error');
+                return;
+            }
+
+            const startDate = new Date(startDateString);
+            const endDate = new Date(endDateString);
+            endDate.setHours(23, 59, 59, 999); // Include the end date fully
+
+            if (startDate > endDate) {
+                showMessage('Tanggal mulai tidak boleh setelah tanggal akhir!', 'error');
+                return;
+            }
+
+            const filteredTransactions = budgetTransactions.filter(transaction => {
+                const transactionDate = new Date(transaction.date);
+                return transactionDate >= startDate && transactionDate <= endDate;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date, oldest first
+
+            if (filteredTransactions.length === 0) {
+                showMessage('Tidak ada transaksi dalam rentang tanggal yang dipilih!', 'error');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new(); // Create new workbook
+            const ws = XLSX.utils.aoa_to_sheet([]); // Create new empty worksheet
+
+            // Add report title
+            XLSX.utils.sheet_add_aoa(ws, [["Laporan Penganggaran"]], { origin: "A1" });
+            XLSX.utils.sheet_add_aoa(ws, [[`Rentang Tanggal: ${getReadableDate(startDateString)} - ${getReadableDate(endDateString)}`]], { origin: "A2" });
+
+            // Calculate total income and expense within the filtered range
+            let totalIncome = 0;
+            let totalExpense = 0;
+            filteredTransactions.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                } else {
+                    totalExpense += t.amount;
+                }
+            });
+
+            // Add summary totals
+            XLSX.utils.sheet_add_aoa(ws, [
+                ["Saldo Saat Ini:", calculateBalance()], // Current balance from all transactions in the app
+                ["Total Pemasukan (dalam rentang ini):", totalIncome],
+                ["Total Pengeluaran (dalam rentang ini):", totalExpense]
+            ], { origin: "A4" });
+
+            // Apply bold style and currency format to summary cells
+            // Current Balance
+            if (ws['A4']) ws['A4'].s = { font: { bold: true } };
+            if (ws['B4']) { ws['B4'].s = { font: { bold: true }, numFmt: 'Rp#,##0' }; ws['B4'].t = 'n'; } // Ensure treated as number
+            // Total Income
+            if (ws['A5']) ws['A5'].s = { font: { bold: true } };
+            if (ws['B5']) { ws['B5'].s = { font: { bold: true }, numFmt: 'Rp#,##0' }; ws['B5'].t = 'n'; }
+            // Total Expense
+            if (ws['A6']) ws['A6'].s = { font: { bold: true } };
+            if (ws['B6']) { ws['B6'].s = { font: { bold: true }, numFmt: 'Rp#,##0' }; ws['B6'].t = 'n'; }
+
+
+            const headers = ["Tanggal", "Tipe", "Jumlah", "Deskripsi"];
+            let currentRow = 8; // Starting row of transaction content section
+
+            // Income Transactions Section
+            const incomeTransactions = filteredTransactions.filter(t => t.type === 'income');
+            let incomeTitleRow = -1;
+            if (incomeTransactions.length > 0) {
+                incomeTitleRow = currentRow; // Capture income title row for merging
+                XLSX.utils.sheet_add_aoa(ws, [["Pemasukan"]], { origin: `A${currentRow}` });
+                if (ws[`A${currentRow}`]) ws[`A${currentRow}`].s = { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: "E8F5E9" } } };
+                currentRow++;
+
+                XLSX.utils.sheet_add_aoa(ws, [headers], { origin: `A${currentRow}` });
+                for(let i=0; i<headers.length; i++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: currentRow -1, c: i });
+                    if(ws[cellRef]) ws[cellRef].s = { font: { bold: true }, fill: { fgColor: { rgb: "D0F8D2" } } };
+                }
+                currentRow++;
+
+                const incomeData = incomeTransactions.map(t => [
+                    new Date(t.date),
+                    'Pemasukan',
+                    t.amount,
+                    t.description
+                ]);
+                XLSX.utils.sheet_add_aoa(ws, incomeData, { origin: `A${currentRow}` });
+                
+                // Apply date and currency format for income data
+                for (let i = 0; i < incomeData.length; i++) {
+                    const dataRow = currentRow + i;
+                    const dateCellRef = XLSX.utils.encode_cell({ r: dataRow, c: 0 }); // Column A
+                    if (ws[dateCellRef]) {
+                        ws[dateCellRef].t = 'n';
+                        ws[dateCellRef].z = 'dd-mm-yyyy';
+                    }
+                    const amountCellRef = XLSX.utils.encode_cell({ r: dataRow, c: 2 }); // Column C
+                    if (ws[amountCellRef]) {
+                        ws[amountCellRef].t = 'n';
+                        ws[amountCellRef].z = 'Rp#,##0';
+                    }
+                }
+                currentRow += incomeTransactions.length;
+            }
+
+            // Add empty row between sections only if both income and expense exist
+            const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
+            if (incomeTransactions.length > 0 && expenseTransactions.length > 0) {
+                currentRow++;
+            }
+
+            // Expense Transactions Section
+            let expenseTitleRow = -1;
+            if (expenseTransactions.length > 0) {
+                expenseTitleRow = currentRow; // Capture expense title row for merging
+                XLSX.utils.sheet_add_aoa(ws, [["Pengeluaran"]], { origin: `A${currentRow}` });
+                if (ws[`A${currentRow}`]) ws[`A${currentRow}`].s = { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: "FFEBEE" } } };
+                currentRow++;
+
+                XLSX.utils.sheet_add_aoa(ws, [headers], { origin: `A${currentRow}` });
+                for(let i=0; i<headers.length; i++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: currentRow, c: i }); // Adjusted row index for header styling
+                    if(ws[cellRef]) ws[cellRef].s = { font: { bold: true }, fill: { fgColor: { rgb: "FFCDD2" } } };
+                }
+                currentRow++;
+
+                // Create expense data array with explicit column placement
+                const expenseData = expenseTransactions.map(t => {
+                    const row = new Array(4); // Ensure array has size 4 (for 4 columns)
+                    row[0] = new Date(t.date);     // Date (Column A)
+                    row[1] = 'Pengeluaran';        // Type (Column B)
+                    row[2] = t.amount;             // Amount (Column C)
+                    row[3] = t.description;        // Description (Column D)
+                    return row;
+                });
+
+                XLSX.utils.sheet_add_aoa(ws, expenseData, { origin: `A${currentRow}` });
+
+                // Apply date and currency format for expense data
+                for (let i = 0; i < expenseData.length; i++) {
+                    const dataRow = currentRow + i;
+                    const dateCellRef = XLSX.utils.encode_cell({ r: dataRow, c: 0 }); // Column A
+                    if (ws[dateCellRef]) {
+                        ws[dateCellRef].t = 'n';
+                        ws[dateCellRef].z = 'dd-mm-yyyy';
+                    }
+                    const amountCellRef = XLSX.utils.encode_cell({ r: dataRow, c: 2 }); // Column C
+                    if (ws[amountCellRef]) {
+                        ws[amountCellRef].t = 'n';
+                        ws[amountCellRef].z = 'Rp#,##0';
+                    }
+                }
+                currentRow += expenseTransactions.length;
+            }
+
+            // Set column widths for better readability
+            ws['!cols'] = [
+                { wch: 15 }, // Date
+                { wch: 12 }, // Type
+                { wch: 15 }, // Amount
+                { wch: 40 }  // Deskripsi
+            ];
+
+            // Merge cells for report title and date range
+            if (!ws['!merges']) ws['!merges'] = [];
+            ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }); // Judul Laporan (A1)
+            ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: headers.length - 1 } }); // Rentang Tanggal (A2)
+
+            // Merge cells for Income section title
+            if (incomeTitleRow !== -1) {
+                ws['!merges'].push({ s: { r: incomeTitleRow - 1, c: 0 }, e: { r: incomeTitleRow - 1, c: headers.length - 1 } });
+            }
+            // Merge cells for Expense section title
+            if (expenseTitleRow !== -1) {
+                ws['!merges'].push({ s: { r: expenseTitleRow - 1, c: 0 }, e: { r: expenseTitleRow - 1, c: headers.length - 1 } });
+            }
+
+
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Anggaran");
+
+            const fileName = `laporan_anggaran_${startDateString}_${endDateString}.xlsx`;
+            XLSX.writeFile(wb, fileName); // Ini akan memicu dialog "Simpan Sebagai" di browser
+
+            showMessage('Data berhasil diekspor ke file Excel (.xlsx)!', 'success');
+            hideExportBudgetModal();
+        }
+
+
+        // --- Event Listeners ---
+        
+        transactionAmountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmTransactionButton.click();
+            }
+        });
+        transactionDescriptionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmTransactionButton.click();
+            }
+        });
+
+        // Tombol & Modal Transaksi
+        addTransactionButton.addEventListener('click', () => showAddEditTransactionModal());
+        cancelTransactionButton.addEventListener('click', hideAddEditTransactionModal);
+        confirmTransactionButton.addEventListener('click', saveTransaction); // Changed to local save
+
+        // Listener Multi-pilih/Hapus Anggaran
+        if (selectAllTransactionsCheckbox) {
+            selectAllTransactionsCheckbox.addEventListener('change', (e) => toggleAllTransactions(e.target.checked));
+        }
+        // Combined delete button will handle all deletions
+        deleteSelectedTransactionsButton.addEventListener('click', deleteSelectedTransactions); 
+        // Edit selected button
+        editSelectedButton.addEventListener('click', handleEditSelectedButton);
+
+
+        // Listener input pencarian
+        transactionSearchInput.addEventListener('input', renderBudget);
+
+        // Listener fitur ekspor
+        exportBudgetButton.addEventListener('click', showExportBudgetModal);
+        cancelExportButton.addEventListener('click', hideExportBudgetModal);
+        confirmExportButton.addEventListener('click', exportTransactionsToXlsx);
+        
+        // --- Fungsi Inisialisasi Aplikasi ---
+        function initApp() {
+            loadTransactionsFromLocalStorage(); // Load data from local storage on init
+        }
+
+        // Panggil initApp saat halaman dimuat
+        window.onload = initApp;
+    </script>
+</body>
+</html>
