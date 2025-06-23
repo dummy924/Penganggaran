@@ -327,11 +327,11 @@
         // No currentUser, all data local
         let budgetTransactions = []; // Stores all budget transactions for the current user
 
-        // Generate a session ID to act as a unique identifier for local storage, persisting across reloads within the same session
-        let sessionId = sessionStorage.getItem('budgetSessionId');
+        // Mengubah penyimpanan sessionId dari sessionStorage ke localStorage
+        let sessionId = localStorage.getItem('budgetSessionId');
         if (!sessionId) {
             sessionId = crypto.randomUUID();
-            sessionStorage.setItem('budgetSessionId', sessionId);
+            localStorage.setItem('budgetSessionId', sessionId); // Simpan di localStorage
         }
 
         // --- DOM Element References ---
