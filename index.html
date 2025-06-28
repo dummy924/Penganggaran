@@ -35,17 +35,6 @@
             height: 300px;
             width: 100%;
         }
-        /* FIX: Ensure hidden modals don't block clicks */
-        .modal-hidden {
-            display: none;
-            z-index: -10;
-            pointer-events: none;
-        }
-        .modal-visible {
-            display: flex;
-            z-index: 50;
-            pointer-events: auto;
-        }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -157,7 +146,7 @@
     </div>
 
     <!-- Modal Tambah/Edit Transaksi -->
-    <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center modal-hidden">
+    <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 id="transactionModalTitle" class="text-2xl font-bold text-gray-800 mb-6">Tambah Transaksi</h3>
             <form id="transactionForm" class="space-y-4">
@@ -185,7 +174,7 @@
     </div>
     
     <!-- Modal Export -->
-    <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center modal-hidden">
+    <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Pilih Rentang Tanggal Ekspor</h3>
             <div class="space-y-4">
@@ -413,8 +402,7 @@
                 transactionDateInput.value = formatDateToYYYYMMDD(new Date());
             }
             toggleCategoryVisibility();
-            addEditTransactionModal.classList.remove('modal-hidden');
-            addEditTransactionModal.classList.add('modal-visible');
+            addEditTransactionModal.classList.remove('hidden');
             transactionAmountInput.focus();
         }
         
@@ -424,15 +412,12 @@
             const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             exportStartDateInput.value = formatDateToYYYYMMDD(firstDay);
             exportEndDateInput.value = formatDateToYYYYMMDD(lastDay);
-            exportBudgetModal.classList.remove('modal-hidden');
-            exportBudgetModal.classList.add('modal-visible');
+            exportBudgetModal.classList.remove('hidden');
         }
         
         function hideModals() {
-            addEditTransactionModal.classList.add('modal-hidden');
-            addEditTransactionModal.classList.remove('modal-visible');
-            exportBudgetModal.classList.add('modal-hidden');
-            exportBudgetModal.classList.remove('modal-visible');
+            addEditTransactionModal.classList.add('hidden');
+            exportBudgetModal.classList.add('hidden');
         }
         
         function toggleCategoryVisibility() {
@@ -471,7 +456,7 @@
         cancelTransactionButton.addEventListener('click', hideModals);
         transactionForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const formData = new FormData(transactionForm); // Use the form element directly
+            const formData = new FormData(transactionForm); 
             saveTransaction({
                 id: editingTransactionId,
                 type: formData.get('transactionTypeInput'),
