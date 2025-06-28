@@ -13,6 +13,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
         }
         /* Custom scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar {
@@ -33,6 +34,17 @@
             position: relative;
             height: 300px;
             width: 100%;
+        }
+        /* FIX: Ensure hidden modals don't block clicks */
+        .modal-hidden {
+            display: none;
+            z-index: -10;
+            pointer-events: none;
+        }
+        .modal-visible {
+            display: flex;
+            z-index: 50;
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -145,36 +157,35 @@
     </div>
 
     <!-- Modal Tambah/Edit Transaksi -->
-    <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center modal-hidden">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 id="transactionModalTitle" class="text-2xl font-bold text-gray-800 mb-6">Tambah Transaksi</h3>
-            <div class="space-y-4">
-                <select id="transactionTypeInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
+            <form id="transactionForm" class="space-y-4">
+                <select id="transactionTypeInput" name="transactionTypeInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
                     <option value="expense">Pengeluaran</option>
                     <option value="income">Pemasukan</option>
                 </select>
-                <input type="number" id="transactionAmountInput" placeholder="Jumlah (Rp)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500" min="0">
-                <input type="text" id="transactionDescriptionInput" placeholder="Deskripsi (misal: Gaji, Belanja Makanan)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
-                <input type="date" id="transactionDateInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
+                <input type="number" id="transactionAmountInput" name="transactionAmountInput" placeholder="Jumlah (Rp)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500" min="0">
+                <input type="text" id="transactionDescriptionInput" name="transactionDescriptionInput" placeholder="Deskripsi (misal: Gaji, Belanja Makanan)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
+                <input type="date" id="transactionDateInput" name="transactionDateInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
                 
-                <!-- NEW: Kategori Wajib/Keinginan -->
                 <div id="categoryContainer">
                     <label for="transactionCategoryInput" class="text-sm font-medium text-gray-700">Kategori Pengeluaran</label>
-                    <select id="transactionCategoryInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 mt-1">
+                    <select id="transactionCategoryInput" name="transactionCategoryInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 mt-1">
                         <option value="wajib">Wajib (Kebutuhan)</option>
                         <option value="keinginan">Keinginan (Gaya Hidup)</option>
                     </select>
                 </div>
-            </div>
-            <div class="flex justify-end space-x-4 mt-8">
-                <button id="cancelTransactionButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Batal</button>
-                <button id="confirmTransactionButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">Simpan</button>
-            </div>
+                 <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="cancelTransactionButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">Simpan</button>
+                </div>
+            </form>
         </div>
     </div>
     
     <!-- Modal Export -->
-    <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center modal-hidden">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Pilih Rentang Tanggal Ekspor</h3>
             <div class="space-y-4">
@@ -188,14 +199,14 @@
                 </div>
             </div>
             <div class="flex justify-end space-x-4 mt-8">
-                <button id="cancelExportButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">Batal</button>
-                <button id="confirmExportButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">Ekspor</button>
+                <button type="button" id="cancelExportButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">Batal</button>
+                <button type="button" id="confirmExportButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">Ekspor</button>
             </div>
         </div>
     </div>
     
     <!-- Message Box -->
-    <div id="messageBox" class="fixed bottom-5 right-5 bg-red-600 text-white py-3 px-5 rounded-lg shadow-lg text-center opacity-0 transition-all duration-300 pointer-events-none" style="z-index: 1000;"></div>
+    <div id="messageBox" class="fixed bottom-5 right-5 bg-red-600 text-white py-3 px-5 rounded-lg shadow-lg text-center opacity-0 transition-all duration-300 pointer-events-none z-[100]"></div>
 
     <script type="module">
         // --- Global Variables & State ---
@@ -203,7 +214,6 @@
         let editingTransactionId = null;
         let expenseChart = null; // To hold the chart instance
 
-        // Menggunakan localStorage untuk persistensi data berbasis sesi unik
         let sessionId = localStorage.getItem('budgetSessionId');
         if (!sessionId) {
             sessionId = crypto.randomUUID();
@@ -218,7 +228,6 @@
         const needsWantsBar = document.getElementById('needsWantsBar');
         const needsPercentage = document.getElementById('needsPercentage');
         const wantsPercentage = document.getElementById('wantsPercentage');
-
         const addTransactionButton = document.getElementById('addTransactionButton');
         const transactionList = document.getElementById('transactionList');
         const noTransactionsMessage = document.getElementById('noTransactionsMessage');
@@ -229,6 +238,7 @@
         // Modals
         const addEditTransactionModal = document.getElementById('addEditTransactionModal');
         const transactionModalTitle = document.getElementById('transactionModalTitle');
+        const transactionForm = document.getElementById('transactionForm');
         const transactionTypeInput = document.getElementById('transactionTypeInput');
         const transactionAmountInput = document.getElementById('transactionAmountInput');
         const transactionDescriptionInput = document.getElementById('transactionDescriptionInput');
@@ -236,8 +246,7 @@
         const categoryContainer = document.getElementById('categoryContainer');
         const transactionCategoryInput = document.getElementById('transactionCategoryInput');
         const cancelTransactionButton = document.getElementById('cancelTransactionButton');
-        const confirmTransactionButton = document.getElementById('confirmTransactionButton');
-
+        
         // Export elements
         const exportBudgetButton = document.getElementById('exportBudgetButton');
         const exportBudgetModal = document.getElementById('exportBudgetModal');
@@ -246,29 +255,20 @@
         const cancelExportButton = document.getElementById('cancelExportButton');
         const confirmExportButton = document.getElementById('confirmExportButton');
 
-        // Message Box
         const messageBox = document.getElementById('messageBox');
 
         // --- Utility Functions ---
         function showMessage(message, type = 'error') {
             messageBox.textContent = message;
-            messageBox.className = 'fixed bottom-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg text-center transition-all duration-300 pointer-events-none'; // Reset classes
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-600');
-            } else {
-                messageBox.classList.add('bg-green-600');
-            }
+            messageBox.className = 'fixed bottom-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg text-center transition-all duration-300 pointer-events-none z-[100]';
+            messageBox.classList.add(type === 'success' ? 'bg-green-600' : 'bg-red-600');
             messageBox.classList.remove('opacity-0');
-
-            setTimeout(() => {
-                messageBox.classList.add('opacity-0');
-            }, 3000);
+            setTimeout(() => messageBox.classList.add('opacity-0'), 3000);
         }
 
         const formatRupiah = (amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
         const formatDateToYYYYMMDD = (dateObj) => dateObj.toISOString().split('T')[0];
 
-        // --- Local Storage Functions ---
         const loadTransactions = () => {
             const data = localStorage.getItem(`budgetTransactions_${sessionId}`);
             budgetTransactions = data ? JSON.parse(data) : [];
@@ -283,42 +283,29 @@
         }
 
         function renderDashboard() {
-            // Calculate overall balance
             const totalBalance = budgetTransactions.reduce((total, t) => t.type === 'income' ? total + t.amount : total - t.amount, 0);
             currentBalance.textContent = formatRupiah(totalBalance);
-
-            // Filter for current month's transactions
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            
             const monthlyTransactions = budgetTransactions.filter(t => {
                 const tDate = new Date(t.date);
                 return tDate >= startOfMonth && tDate <= endOfMonth;
             });
-
             const incomeThisMonth = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
             const expenseThisMonth = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
             monthlyIncome.textContent = formatRupiah(incomeThisMonth);
             monthlyExpense.textContent = formatRupiah(expenseThisMonth);
-
-            // Calculate and display Savings Rate
             const rate = incomeThisMonth > 0 ? ((incomeThisMonth - expenseThisMonth) / incomeThisMonth) * 100 : 0;
             savingsRate.textContent = `${Math.round(rate)}%`;
-
-            // Calculate and display Needs vs. Wants
             const needsExpense = monthlyTransactions.filter(t => t.type === 'expense' && t.category === 'wajib').reduce((sum, t) => sum + t.amount, 0);
             const wantsExpense = monthlyTransactions.filter(t => t.type === 'expense' && t.category === 'keinginan').reduce((sum, t) => sum + t.amount, 0);
             const totalExpenseCategory = needsExpense + wantsExpense;
-            
             const needsPerc = totalExpenseCategory > 0 ? (needsExpense / totalExpenseCategory) * 100 : 0;
             const wantsPerc = totalExpenseCategory > 0 ? (wantsExpense / totalExpenseCategory) * 100 : 0;
-
             needsWantsBar.style.width = `${needsPerc}%`;
             needsPercentage.textContent = `Wajib: ${Math.round(needsPerc)}%`;
             wantsPercentage.textContent = `Keinginan: ${Math.round(wantsPerc)}%`;
-
             renderExpensePieChart(monthlyTransactions);
         }
 
@@ -334,56 +321,22 @@
 
             const labels = Object.keys(expenseData);
             const data = Object.values(expenseData);
-            
             const backgroundColors = labels.map((_, i) => `hsl(${i * 40}, 70%, 60%)`);
 
-            if (expenseChart) {
-                expenseChart.destroy();
-            }
-
-            if (labels.length === 0) {
-                 // Optionally, display a message if no data
-                return;
-            }
+            if (expenseChart) expenseChart.destroy();
+            if (labels.length === 0) return;
             
             expenseChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
-                    datasets: [{
-                        label: 'Pengeluaran',
-                        data: data,
-                        backgroundColor: backgroundColors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
+                    datasets: [{ label: 'Pengeluaran', data: data, backgroundColor: backgroundColors, borderColor: '#ffffff', borderWidth: 2 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += formatRupiah(context.parsed);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                        tooltip: { callbacks: { label: (context) => `${context.label || ''}: ${formatRupiah(context.parsed)}` } }
                     }
                 }
             });
@@ -392,10 +345,7 @@
         function renderTransactionList() {
             transactionList.innerHTML = '';
             const searchTerm = transactionSearchInput.value.toLowerCase();
-            const filtered = budgetTransactions
-                .filter(t => t.description.toLowerCase().includes(searchTerm))
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
-
+            const filtered = budgetTransactions.filter(t => t.description.toLowerCase().includes(searchTerm)).sort((a, b) => new Date(b.date) - new Date(a.date));
             if (filtered.length === 0) {
                 noTransactionsMessage.classList.remove('hidden');
             } else {
@@ -407,90 +357,51 @@
         function createTransactionElement(transaction) {
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50';
-
             const typeClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
             const sign = transaction.type === 'income' ? '+' : '-';
-            
             let categoryText = '-';
             let categoryClass = 'text-gray-500';
             if (transaction.type === 'expense') {
-                if (transaction.category === 'wajib') {
-                    categoryText = 'Wajib';
-                    categoryClass = 'bg-sky-100 text-sky-700';
-                } else if (transaction.category === 'keinginan') {
-                    categoryText = 'Keinginan';
-                    categoryClass = 'bg-indigo-100 text-indigo-700';
-                }
+                if (transaction.category === 'wajib') { categoryText = 'Wajib'; categoryClass = 'bg-sky-100 text-sky-700'; } 
+                else if (transaction.category === 'keinginan') { categoryText = 'Keinginan'; categoryClass = 'bg-indigo-100 text-indigo-700'; }
             }
-
             tr.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${transaction.description}</div>
-                    <div class="text-sm text-gray-500">${new Date(transaction.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${typeClass}">
-                    ${sign} ${formatRupiah(transaction.amount)}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    ${categoryText !== '-' ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryClass}">${categoryText}</span>` : '-'}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button class="edit-btn text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                    <button class="delete-btn text-red-600 hover:text-red-900">Hapus</button>
-                </td>
-            `;
-
-            tr.querySelector('.edit-btn').addEventListener('click', () => showAddEditTransactionModal(transaction.id));
-            tr.querySelector('.delete-btn').addEventListener('click', () => {
-                if(confirm(`Anda yakin ingin menghapus transaksi "${transaction.description}"?`)){
-                    deleteTransaction(transaction.id);
-                }
-            });
-
+                <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${transaction.description}</div><div class="text-sm text-gray-500">${new Date(transaction.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}</div></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${typeClass}">${sign} ${formatRupiah(transaction.amount)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${categoryText !== '-' ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryClass}">${categoryText}</span>` : '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button class="edit-btn text-indigo-600 hover:text-indigo-900 mr-3" data-id="${transaction.id}">Edit</button><button class="delete-btn text-red-600 hover:text-red-900" data-id="${transaction.id}">Hapus</button></td>`;
             return tr;
         }
 
         // --- Transaction Logic ---
-        function saveTransaction() {
-            const type = transactionTypeInput.value;
-            const amount = parseFloat(transactionAmountInput.value);
-            const description = transactionDescriptionInput.value.trim();
-            const date = transactionDateInput.value;
-            const category = transactionCategoryInput.value;
-
+        function saveTransaction(data) {
+            const { id, type, amount, description, date, category } = data;
             if (isNaN(amount) || amount <= 0 || !description || !date) {
-                showMessage('Harap isi semua kolom dengan benar.', 'error');
-                return;
+                showMessage('Harap isi semua kolom dengan benar.', 'error'); return;
             }
-
-            if (editingTransactionId) {
-                const index = budgetTransactions.findIndex(t => t.id === editingTransactionId);
+            if (id) {
+                const index = budgetTransactions.findIndex(t => t.id === id);
                 budgetTransactions[index] = { ...budgetTransactions[index], type, amount, description, date, category: type === 'expense' ? category : null };
                 showMessage('Transaksi berhasil diperbarui.', 'success');
             } else {
                 budgetTransactions.push({ id: crypto.randomUUID(), type, amount, description, date, category: type === 'expense' ? category : null });
                 showMessage('Transaksi berhasil ditambahkan.', 'success');
             }
-
-            saveTransactions();
-            renderUI();
-            hideAddEditTransactionModal();
+            saveTransactions(); renderUI(); hideModals();
         }
         
         function deleteTransaction(id) {
             budgetTransactions = budgetTransactions.filter(t => t.id !== id);
-            saveTransactions();
-            renderUI();
+            saveTransactions(); renderUI();
             showMessage('Transaksi berhasil dihapus.', 'success');
         }
-
 
         // --- Modal Handling ---
         function showAddEditTransactionModal(id = null) {
             editingTransactionId = id;
             if (id) {
-                const t = budgetTransactions.find(t => t.id === id);
                 transactionModalTitle.textContent = 'Edit Transaksi';
+                const t = budgetTransactions.find(t => t.id === id);
                 transactionTypeInput.value = t.type;
                 transactionAmountInput.value = t.amount;
                 transactionDescriptionInput.value = t.description;
@@ -498,207 +409,93 @@
                 transactionCategoryInput.value = t.category || 'wajib';
             } else {
                 transactionModalTitle.textContent = 'Tambah Transaksi';
-                transactionTypeInput.value = 'expense';
-                transactionAmountInput.value = '';
-                transactionDescriptionInput.value = '';
+                transactionForm.reset();
                 transactionDateInput.value = formatDateToYYYYMMDD(new Date());
-                transactionCategoryInput.value = 'wajib';
             }
             toggleCategoryVisibility();
-            addEditTransactionModal.classList.remove('hidden');
+            addEditTransactionModal.classList.remove('modal-hidden');
+            addEditTransactionModal.classList.add('modal-visible');
             transactionAmountInput.focus();
         }
-
-        function hideAddEditTransactionModal() {
-            addEditTransactionModal.classList.add('hidden');
-        }
         
-        function toggleCategoryVisibility() {
-            categoryContainer.style.display = transactionTypeInput.value === 'expense' ? 'block' : 'none';
-        }
-
-        // --- Export to Excel ---
         function showExportBudgetModal() {
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             exportStartDateInput.value = formatDateToYYYYMMDD(firstDay);
             exportEndDateInput.value = formatDateToYYYYMMDD(lastDay);
-            exportBudgetModal.classList.remove('hidden');
-        }
-
-        function hideExportBudgetModal() {
-            exportBudgetModal.classList.add('hidden');
+            exportBudgetModal.classList.remove('modal-hidden');
+            exportBudgetModal.classList.add('modal-visible');
         }
         
+        function hideModals() {
+            addEditTransactionModal.classList.add('modal-hidden');
+            addEditTransactionModal.classList.remove('modal-visible');
+            exportBudgetModal.classList.add('modal-hidden');
+            exportBudgetModal.classList.remove('modal-visible');
+        }
+        
+        function toggleCategoryVisibility() {
+            categoryContainer.style.display = transactionTypeInput.value === 'expense' ? 'block' : 'none';
+        }
+
         function exportToXlsx() {
-            const startDateString = exportStartDateInput.value;
-            const endDateString = exportEndDateInput.value;
-
-            if (!startDateString || !endDateString) {
-                showMessage('Harap pilih tanggal mulai dan tanggal akhir.', 'error');
-                return;
+            const startDate = new Date(exportStartDateInput.value);
+            const endDate = new Date(exportEndDateInput.value);
+            endDate.setHours(23, 59, 59, 999);
+            if (!exportStartDateInput.value || !exportEndDateInput.value || startDate > endDate) {
+                showMessage('Rentang tanggal tidak valid.', 'error'); return;
             }
-
-            const startDate = new Date(startDateString);
-            const endDate = new Date(endDateString);
-            endDate.setHours(23, 59, 59, 999); // Include the end date fully
-
-            if (startDate > endDate) {
-                showMessage('Tanggal mulai tidak boleh setelah tanggal akhir.', 'error');
-                return;
-            }
-
-            const filteredTransactions = budgetTransactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate >= startDate && transactionDate <= endDate;
+            const filtered = budgetTransactions.filter(t => {
+                const tDate = new Date(t.date); return tDate >= startDate && tDate <= endDate;
             });
-
-            if (filteredTransactions.length === 0) {
-                showMessage('Tidak ada transaksi dalam rentang tanggal yang dipilih.', 'error');
-                return;
+            if (filtered.length === 0) {
+                showMessage('Tidak ada data untuk diekspor pada rentang ini.', 'error'); return;
             }
-            
-            // --- 1. Perhitungan Metrik ---
-            const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const totalExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-            const netFlow = totalIncome - totalExpense;
-            const needsExpense = filteredTransactions.filter(t => t.type === 'expense' && t.category === 'wajib').reduce((sum, t) => sum + t.amount, 0);
-            const wantsExpense = filteredTransactions.filter(t => t.type === 'expense' && t.category === 'keinginan').reduce((sum, t) => sum + t.amount, 0);
-            const savingsRateValue = totalIncome > 0 ? (netFlow / totalIncome) : 0;
-            const needsPercentage = totalExpense > 0 ? (needsExpense / totalExpense) * 100 : 0;
-            const wantsPercentage = totalExpense > 0 ? (wantsExpense / totalExpense) * 100 : 0;
-
-
-            // --- 2. Inisialisasi Workbook ---
+            const dataToExport = filtered.map(t => ({
+                Tanggal: new Date(t.date).toLocaleDateString('id-ID'),
+                Tipe: t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                Jumlah: t.amount,
+                Deskripsi: t.description,
+                Kategori: t.type === 'expense' ? (t.category === 'wajib' ? 'Wajib' : 'Keinginan') : ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet([]); // Start with an empty sheet
-            ws['!merges'] = []; // Initialize merges array
-
-            // --- 3. Bangun Header & Ringkasan ---
-            let currentRow = 0;
-            
-            // Judul Utama
-            ws[`A${currentRow + 1}`] = { v: "Laporan Anggaran Cerdas", t: 's', s: { font: { bold: true, sz: 16, color: { rgb: "FFFFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } }, alignment: { horizontal: "center", vertical: "center" } } };
-            ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } }); // Merge A1:D1
-            currentRow++;
-
-            // Rentang Tanggal
-            const readableStartDate = new Date(startDateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            const readableEndDate = new Date(endDateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            ws[`A${currentRow + 1}`] = { v: `Periode: ${readableStartDate} - ${readableEndDate}`, t: 's', s: { font: { italic: true, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } } };
-            ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } }); // Merge A2:D2
-            currentRow += 2; // Add a blank row after
-
-            // Kartu Ringkasan
-            const summaryData = [
-                ["Total Pemasukan", {v: totalIncome, t: 'n', z: '"Rp"#,##0'}],
-                ["Total Pengeluaran", {v: totalExpense, t: 'n', z: '"Rp"#,##0'}],
-                ["Surplus / Defisit", {v: netFlow, t: 'n', z: '"Rp"#,##0'}],
-                ["Rasio Tabungan", {v: savingsRateValue, t: 'n', z: '0.00%'}],
-                [], // Blank Row
-                ["Pengeluaran Wajib", {v: needsExpense, t: 'n', z: '"Rp"#,##0'}, `(${(needsPercentage).toFixed(1)}%)`],
-                ["Pengeluaran Keinginan", {v: wantsExpense, t: 'n', z: '"Rp"#,##0'}, `(${(wantsPercentage).toFixed(1)}%)`],
-            ];
-            XLSX.utils.sheet_add_aoa(ws, summaryData, { origin: `A${currentRow + 1}` });
-            
-            // Styling Ringkasan
-            for (let i = 0; i < summaryData.length; i++) {
-                const rowNum = currentRow + i + 1;
-                if (ws[`A${rowNum}`]) ws[`A${rowNum}`].s = { font: { bold: true } };
-                if (ws[`B${rowNum}`] && ws[`B${rowNum}`].z) {
-                     ws[`B${rowNum}`].s = { font: { bold: true }, numFmt: ws[`B${rowNum}`].z };
-                }
-                 if (i === 2 && netFlow < 0) { // Highlight net flow if negative
-                    if(ws[`B${rowNum}`]) ws[`B${rowNum}`].s.font.color = { rgb: "990000" };
-                }
-            }
-
-            currentRow += summaryData.length + 1; // Move to next section
-
-            // --- 4. Bangun Tabel Rincian Transaksi ---
-            const incomeTransactions = filteredTransactions.filter(t => t.type === 'income').sort((a,b) => new Date(a.date) - new Date(b.date));
-            const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense').sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            // Tabel Pemasukan
-            if (incomeTransactions.length > 0) {
-                 ws[`A${currentRow + 1}`] = { v: "Rincian Pemasukan", t: 's', s: { font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "16A34A" } }, alignment: { horizontal: "center" } } };
-                 ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } });
-                 currentRow++;
-                 
-                 const incomeHeaders = ["Tanggal", "Deskripsi", "", "Jumlah"];
-                 XLSX.utils.sheet_add_aoa(ws, [incomeHeaders], { origin: `A${currentRow + 1}` });
-                 for (let i=0; i<incomeHeaders.length; i++) ws[XLSX.utils.encode_cell({r:currentRow, c:i})].s = { font: { bold: true }, fill: { fgColor: { rgb: "D1FAE5" } }};
-                 ws['!merges'].push({ s: { r: currentRow, c: 1 }, e: { r: currentRow, c: 2 } }); // Merge deskripsi header
-                 currentRow++;
-
-                 const incomeData = incomeTransactions.map(t => [ new Date(t.date), t.description, "", t.amount ]);
-                 XLSX.utils.sheet_add_aoa(ws, incomeData, { origin: `A${currentRow + 1}`, cellDates: true });
-                 
-                 // Formatting for income data
-                 for(let i=0; i < incomeData.length; i++) {
-                    const r = currentRow + i;
-                    ws[XLSX.utils.encode_cell({r, c: 0})].z = 'dd-mmm-yyyy';
-                    ws[XLSX.utils.encode_cell({r, c: 3})].t = 'n';
-                    ws[XLSX.utils.encode_cell({r, c: 3})].z = '"Rp"#,##0';
-                    ws['!merges'].push({ s: { r: r, c: 1 }, e: { r: r, c: 2 } }); // Merge description cells
-                 }
-                 currentRow += incomeData.length + 1;
-            }
-
-            // Tabel Pengeluaran
-            if (expenseTransactions.length > 0) {
-                 ws[`A${currentRow + 1}`] = { v: "Rincian Pengeluaran", t: 's', s: { font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "DC2626" } }, alignment: { horizontal: "center" } } };
-                 ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } });
-                 currentRow++;
-                 
-                 const expenseHeaders = ["Tanggal", "Deskripsi", "Kategori", "Jumlah"];
-                 XLSX.utils.sheet_add_aoa(ws, [expenseHeaders], { origin: `A${currentRow + 1}` });
-                 for (let i=0; i<expenseHeaders.length; i++) ws[XLSX.utils.encode_cell({r:currentRow, c:i})].s = { font: { bold: true }, fill: { fgColor: { rgb: "FEE2E2" } }};
-                 currentRow++;
-
-                 const expenseData = expenseTransactions.map(t => [ new Date(t.date), t.description, t.category === 'wajib' ? 'Wajib' : 'Keinginan', t.amount ]);
-                 XLSX.utils.sheet_add_aoa(ws, expenseData, { origin: `A${currentRow + 1}`, cellDates: true });
-
-                 // Formatting for expense data
-                 for(let i=0; i < expenseData.length; i++) {
-                    const r = currentRow + i;
-                    ws[XLSX.utils.encode_cell({r: r, c: 0})].z = 'dd-mmm-yyyy';
-                    ws[XLSX.utils.encode_cell({r: r, c: 3})].t = 'n';
-                    ws[XLSX.utils.encode_cell({r: r, c: 3})].z = '"Rp"#,##0';
-                 }
-            }
-
-            // --- 5. Finalisasi & Download ---
-            ws['!cols'] = [
-                { wch: 20 }, // A: Tanggal / Label Ringkasan
-                { wch: 35 }, // B: Deskripsi / Nilai Ringkasan
-                { wch: 20 }, // C: Kategori
-                { wch: 20 }  // D: Jumlah
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan Anggaran");
-            
-            const fileName = `Laporan_Anggaran_${startDateString}_${endDateString}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-
-            hideExportBudgetModal();
-            showMessage('Laporan Excel berhasil dibuat!', 'success');
+            XLSX.utils.book_append_sheet(wb, ws, 'Laporan Anggaran');
+            XLSX.writeFile(wb, `Laporan_Anggaran_${formatDateToYYYYMMDD(startDate)}_-_${formatDateToYYYYMMDD(endDate)}.xlsx`);
+            hideModals(); showMessage('Data berhasil diekspor!', 'success');
         }
 
         // --- Event Listeners ---
         addTransactionButton.addEventListener('click', () => showAddEditTransactionModal());
-        cancelTransactionButton.addEventListener('click', hideAddEditTransactionModal);
-        confirmTransactionButton.addEventListener('click', saveTransaction);
+        cancelTransactionButton.addEventListener('click', hideModals);
+        transactionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(transactionForm); // Use the form element directly
+            saveTransaction({
+                id: editingTransactionId,
+                type: formData.get('transactionTypeInput'),
+                amount: parseFloat(formData.get('transactionAmountInput')),
+                description: formData.get('transactionDescriptionInput'),
+                date: formData.get('transactionDateInput'),
+                category: formData.get('transactionCategoryInput')
+            });
+        });
+        
+        transactionList.addEventListener('click', e => {
+            if (e.target.classList.contains('edit-btn')) showAddEditTransactionModal(e.target.dataset.id);
+            if (e.target.classList.contains('delete-btn')) {
+                if (confirm(`Anda yakin ingin menghapus transaksi ini?`)) deleteTransaction(e.target.dataset.id);
+            }
+        });
+
         transactionTypeInput.addEventListener('change', toggleCategoryVisibility);
         transactionSearchInput.addEventListener('input', renderTransactionList);
-        
         exportBudgetButton.addEventListener('click', showExportBudgetModal);
-        cancelExportButton.addEventListener('click', hideExportBudgetModal);
+        cancelExportButton.addEventListener('click', hideModals);
         confirmExportButton.addEventListener('click', exportToXlsx);
-
-        // --- Initialization ---
-        window.onload = loadTransactions;
+        
+        loadTransactions(); // FIX: Call the correct function name
 
     </script>
 </body>
