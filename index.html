@@ -3,168 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Penganggaran Cerdas</title>
+    <title>Dasbor Anggaran Cerdas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (xlsx.js) untuk membaca/menulis Excel (.xlsx) -->
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- Chart.js untuk grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-        }
-        /* Custom scrollbar styling */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+            background-color: #f1f5f9; /* slate-100 */
         }
         .chart-container {
             position: relative;
             height: 300px;
             width: 100%;
         }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .auth-button-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
     </style>
 </head>
-<body class="bg-slate-100">
+<body class="antialiased text-slate-800">
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        
-        <header class="mb-6">
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-800">Dasbor Penganggaran Cerdas</h1>
-            <p id="userIdDisplay" class="text-sm text-slate-500 mt-1" title="User ID"></p>
-        </header>
+    <!-- Main Container -->
+    <div id="app">
 
-        <!-- Bagian Dasbor Analisis -->
-        <section id="dashboard" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- Kartu Saldo Utama -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 col-span-1 lg:col-span-3">
-                 <h2 class="text-lg font-semibold text-slate-600 mb-2">Total Saldo Saat Ini</h2>
-                 <p id="currentBalance" class="text-4xl sm:text-5xl font-bold text-blue-600">Rp 0</p>
+        <!-- Login Screen -->
+        <div id="login-screen" class="flex items-center justify-center min-h-screen bg-slate-200">
+            <div class="text-center p-8 bg-white rounded-2xl shadow-2xl max-w-sm mx-4">
+                <h1 class="text-3xl font-bold text-slate-800 mb-2">Anggaran Cerdas</h1>
+                <p class="text-slate-600 mb-8">Masuk untuk mengelola keuangan Anda dengan aman.</p>
+                <button id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center transition-transform transform hover:scale-105 active:scale-95">
+                    <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_light_color_272x92dp.png" alt="Logo Google" class="auth-button-icon bg-white p-1 rounded-full">
+                    Masuk dengan Google
+                </button>
             </div>
-            
-            <!-- Kartu Analisis Bulanan -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                <h3 class="text-md font-semibold text-slate-600 mb-4">Analisis Bulan Ini</h3>
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-sm text-slate-500">Total Pemasukan</p>
-                        <p id="monthlyIncome" class="text-2xl font-bold text-green-600">Rp 0</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-500">Total Pengeluaran</p>
-                        <p id="monthlyExpense" class="text-2xl font-bold text-red-600">Rp 0</p>
-                    </div>
-                </div>
-            </div>
+        </div>
 
-            <!-- Kartu Rasio & Kategori -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                 <h3 class="text-md font-semibold text-slate-600 mb-4">Rasio & Kategori Bulan Ini</h3>
-                 <div class="space-y-4">
+        <!-- App Container (Hidden by default) -->
+        <div id="app-container" class="hidden">
+            <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+                
+                <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                     <div>
-                        <p class="text-sm text-slate-500">Rasio Tabungan (Savings Rate)</p>
-                        <p id="savingsRate" class="text-2xl font-bold text-indigo-600">0%</p>
+                        <h1 class="text-3xl sm:text-4xl font-bold text-slate-800">Dasbor Anggaran</h1>
+                        <p id="userDisplay" class="text-sm text-slate-500 mt-1"></p>
                     </div>
-                    <div>
-                        <p class="text-sm text-slate-500">Pengeluaran Wajib vs. Keinginan</p>
-                        <div class="w-full bg-gray-200 rounded-full h-4 mt-1">
-                          <div id="needsWantsBar" class="bg-gradient-to-r from-sky-500 to-indigo-500 h-4 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <div class="text-xs flex justify-between mt-1">
-                            <span id="needsPercentage" class="font-semibold text-sky-600">Wajib: 0%</span>
-                            <span id="wantsPercentage" class="font-semibold text-indigo-600">Keinginan: 0%</span>
-                        </div>
-                    </div>
-                 </div>
-            </div>
-
-            <!-- Grafik Pengeluaran -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                <h3 class="text-md font-semibold text-slate-600 mb-4">Komposisi Pengeluaran Bulan Ini</h3>
-                <div class="chart-container">
-                    <canvas id="expensePieChart"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bagian Manajemen Transaksi -->
-        <section id="transaction-management" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <h2 class="text-2xl font-bold text-slate-800 mb-2 sm:mb-0">Histori Transaksi</h2>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button id="exportBudgetButton" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 text-sm">
-                        Export ke Excel
+                    <button id="logoutButton" class="mt-4 sm:mt-0 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-sm transition">
+                        Keluar
                     </button>
-                    <button id="addTransactionButton" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 text-sm">
-                        Tambah Transaksi
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Kontrol Transaksi -->
-            <div class="mb-4">
-                 <input
-                    type="text"
-                    id="transactionSearchInput"
-                    placeholder="Cari transaksi..."
-                    class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    aria-label="Cari transaksi"
-                >
-            </div>
+                </header>
 
-            <!-- Daftar Transaksi -->
-            <div class="overflow-x-auto">
-                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
-                        <!-- Items will be rendered here -->
-                    </tbody>
-                </table>
-                 <p id="noTransactionsMessage" class="text-gray-500 text-center mt-8 hidden">Belum ada transaksi. Silakan tambahkan satu!</p>
-            </div>
-        </section>
+                <!-- Dashboard Analytics Section -->
+                <section id="dashboard" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Main Balance Card -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 col-span-1 lg:col-span-2">
+                        <h2 class="text-lg font-semibold text-slate-600 mb-2">Total Saldo Saat Ini</h2>
+                        <p id="currentBalance" class="text-4xl sm:text-5xl font-bold text-blue-600">Rp 0</p>
+                    </div>
+                    
+                    <!-- Monthly Analysis Card -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                        <h3 class="text-md font-semibold text-slate-600 mb-4">Analisis Bulan Ini</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-slate-500">Total Pemasukan</p>
+                                <p id="monthlyIncome" class="text-2xl font-bold text-green-600">Rp 0</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500">Total Pengeluaran</p>
+                                <p id="monthlyExpense" class="text-2xl font-bold text-red-600">Rp 0</p>
+                            </div>
+                             <div>
+                                <p class="text-sm text-slate-500">Rasio Tabungan (Savings Rate)</p>
+                                <p id="savingsRate" class="text-2xl font-bold text-indigo-600">0%</p>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Expense Chart -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                        <h3 class="text-md font-semibold text-slate-600 mb-4">Komposisi Pengeluaran Bulan Ini</h3>
+                        <div class="chart-container">
+                            <canvas id="expensePieChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Transaction Management Section -->
+                <section id="transaction-management" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2 sm:mb-0">Histori Transaksi</h2>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <button id="exportBudgetButton" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 text-sm">
+                                Export ke Excel
+                            </button>
+                            <button id="addIncomeButton" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 text-sm">
+                                + Pemasukan
+                            </button>
+                            <button id="addExpenseButton" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 text-sm">
+                                - Pengeluaran
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <input type="text" id="transactionSearchInput" placeholder="Cari berdasarkan deskripsi, jenis, jumlah, atau tanggal..." class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
+                                <!-- Items will be rendered here -->
+                            </tbody>
+                        </table>
+                        <p id="noTransactionsMessage" class="text-gray-500 text-center mt-8 hidden">Belum ada transaksi. Silakan tambahkan satu!</p>
+                    </div>
+                </section>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal Tambah/Edit Transaksi -->
+    <!-- Modals -->
+    <!-- Add/Edit Transaction Modal -->
     <div id="addEditTransactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 id="transactionModalTitle" class="text-2xl font-bold text-gray-800 mb-6">Tambah Transaksi</h3>
             <div class="space-y-4">
-                <select id="transactionTypeInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
-                    <option value="expense">Pengeluaran</option>
-                    <option value="income">Pemasukan</option>
-                </select>
+                <div id="transactionTypeContainer">
+                    <select id="transactionTypeInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
+                        <option value="expense">Pengeluaran</option>
+                        <option value="income">Pemasukan</option>
+                    </select>
+                </div>
                 <input type="number" id="transactionAmountInput" placeholder="Jumlah (Rp)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500" min="0">
                 <input type="text" id="transactionDescriptionInput" placeholder="Deskripsi (misal: Gaji, Belanja Makanan)" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
                 <input type="date" id="transactionDateInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500">
-                
-                <!-- NEW: Kategori Wajib/Keinginan -->
-                <div id="categoryContainer">
-                    <label for="transactionCategoryInput" class="text-sm font-medium text-gray-700">Kategori Pengeluaran</label>
-                    <select id="transactionCategoryInput" class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 mt-1">
-                        <option value="wajib">Wajib (Kebutuhan)</option>
-                        <option value="keinginan">Keinginan (Gaya Hidup)</option>
-                    </select>
-                </div>
             </div>
             <div class="flex justify-end space-x-4 mt-8">
                 <button id="cancelTransactionButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Batal</button>
@@ -173,7 +165,7 @@
         </div>
     </div>
     
-    <!-- Modal Export -->
+    <!-- Export Modal -->
     <div id="exportBudgetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Pilih Rentang Tanggal Ekspor</h3>
@@ -193,88 +185,181 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm mx-4 text-center">
+            <h3 id="confirmationTitle" class="text-xl font-bold text-gray-800 mb-4">Konfirmasi Hapus</h3>
+            <p id="confirmationMessage" class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus transaksi ini?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancelConfirmationButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg">Batal</button>
+                <button id="confirmDeleteButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">Hapus</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Message Box -->
     <div id="messageBox" class="fixed bottom-5 right-5 bg-red-600 text-white py-3 px-5 rounded-lg shadow-lg text-center opacity-0 transition-all duration-300 pointer-events-none" style="z-index: 1000;"></div>
 
     <script type="module">
-        // --- Global Variables & State ---
-        let budgetTransactions = [];
-        let editingTransactionId = null;
-        let expenseChart = null; // To hold the chart instance
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Menggunakan localStorage untuk persistensi data berbasis sesi unik
-        let sessionId = localStorage.getItem('budgetSessionId');
-        if (!sessionId) {
-            sessionId = crypto.randomUUID();
-            localStorage.setItem('budgetSessionId', sessionId);
+        // --- Firebase Configuration ---
+        // TODO: GANTI DENGAN KONFIGURASI FIREBASE ANDA
+        // Anda bisa mendapatkan ini dari Pengaturan Proyek (Project Settings) di konsol Firebase Anda.
+        const firebaseConfig = {
+          apiKey: "AIzaSyDVCidRfGUmrwQBppz2-88bPxnUHZ1C2RQ",
+          authDomain: "penganggaran-31558.firebaseapp.com",
+          projectId: "penganggaran-31558",
+          storageBucket: "penganggaran-31558.firebasestorage.app",
+          messagingSenderId: "290871974444",
+          appId: "1:290871974444:web:021b9c3832e4bbf22ecf89"
+        };
+        
+        // --- Firebase Initialization ---
+        let app, auth, db;
+        let appId = 'smart-budget-app'; // Anda bisa mengganti ini jika perlu
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            setLogLevel('debug');
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            if (e.message.includes("Cannot read properties of undefined")) {
+                 showMessage("Konfigurasi Firebase belum diisi. Harap edit kode dan masukkan konfigurasi Anda.", "error");
+            } else {
+                 showMessage("Gagal terhubung ke server. Coba muat ulang halaman.", "error");
+            }
         }
 
+        // --- Global State ---
+        let budgetTransactions = [];
+        let editingTransactionId = null;
+        let expenseChart = null;
+        let currentUserId = null;
+        let transactionsUnsubscribe = null;
+
         // --- DOM Element References ---
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginButton = document.getElementById('loginButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const userDisplay = document.getElementById('userDisplay');
         const currentBalance = document.getElementById('currentBalance');
         const monthlyIncome = document.getElementById('monthlyIncome');
         const monthlyExpense = document.getElementById('monthlyExpense');
         const savingsRate = document.getElementById('savingsRate');
-        const needsWantsBar = document.getElementById('needsWantsBar');
-        const needsPercentage = document.getElementById('needsPercentage');
-        const wantsPercentage = document.getElementById('wantsPercentage');
-
-        const addTransactionButton = document.getElementById('addTransactionButton');
         const transactionList = document.getElementById('transactionList');
         const noTransactionsMessage = document.getElementById('noTransactionsMessage');
         const transactionSearchInput = document.getElementById('transactionSearchInput');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        userIdDisplay.textContent = `ID Sesi Lokal: ${sessionId.substring(0, 8)}`;
         
-        // Modals
+        // Modal & Controls
+        const addIncomeButton = document.getElementById('addIncomeButton');
+        const addExpenseButton = document.getElementById('addExpenseButton');
         const addEditTransactionModal = document.getElementById('addEditTransactionModal');
         const transactionModalTitle = document.getElementById('transactionModalTitle');
+        const transactionTypeContainer = document.getElementById('transactionTypeContainer');
         const transactionTypeInput = document.getElementById('transactionTypeInput');
         const transactionAmountInput = document.getElementById('transactionAmountInput');
         const transactionDescriptionInput = document.getElementById('transactionDescriptionInput');
         const transactionDateInput = document.getElementById('transactionDateInput');
-        const categoryContainer = document.getElementById('categoryContainer');
-        const transactionCategoryInput = document.getElementById('transactionCategoryInput');
         const cancelTransactionButton = document.getElementById('cancelTransactionButton');
         const confirmTransactionButton = document.getElementById('confirmTransactionButton');
-
-        // Export elements
         const exportBudgetButton = document.getElementById('exportBudgetButton');
         const exportBudgetModal = document.getElementById('exportBudgetModal');
         const exportStartDateInput = document.getElementById('exportStartDateInput');
         const exportEndDateInput = document.getElementById('exportEndDateInput');
         const cancelExportButton = document.getElementById('cancelExportButton');
         const confirmExportButton = document.getElementById('confirmExportButton');
-
-        // Message Box
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const cancelConfirmationButton = document.getElementById('cancelConfirmationButton');
+        let confirmDeleteButton = document.getElementById('confirmDeleteButton');
         const messageBox = document.getElementById('messageBox');
 
         // --- Utility Functions ---
-        function showMessage(message, type = 'error') {
+        const showMessage = (message, type = 'error') => {
             messageBox.textContent = message;
-            messageBox.className = 'fixed bottom-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg text-center transition-all duration-300 pointer-events-none'; // Reset classes
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-600');
-            } else {
-                messageBox.classList.add('bg-green-600');
-            }
+            messageBox.className = 'fixed bottom-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg text-center transition-all duration-300 pointer-events-none';
+            messageBox.classList.add(type === 'error' ? 'bg-red-600' : 'bg-green-600');
             messageBox.classList.remove('opacity-0');
-
-            setTimeout(() => {
-                messageBox.classList.add('opacity-0');
-            }, 3000);
-        }
-
+            setTimeout(() => messageBox.classList.add('opacity-0'), 4000);
+        };
         const formatRupiah = (amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
         const formatDateToYYYYMMDD = (dateObj) => dateObj.toISOString().split('T')[0];
-
-        // --- Local Storage Functions ---
-        const loadTransactions = () => {
-            const data = localStorage.getItem(`budgetTransactions_${sessionId}`);
-            budgetTransactions = data ? JSON.parse(data) : [];
-            renderUI();
+        const capitalizeWords = (str) => {
+            if (!str) return '';
+            return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
         };
-        const saveTransactions = () => localStorage.setItem(`budgetTransactions_${sessionId}`, JSON.stringify(budgetTransactions));
+
+        // --- Authentication ---
+        const loginWithGoogle = async () => {
+            if (!auth) {
+                showMessage("Konfigurasi Firebase belum lengkap.", "error");
+                return;
+            }
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                showMessage("Gagal masuk dengan Google. Coba lagi.", "error");
+            }
+        };
+
+        const logout = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Sign-Out Error:", error);
+                showMessage("Gagal keluar. Coba lagi.", "error");
+            }
+        };
+
+        if (auth) {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userDisplay.textContent = `Masuk sebagai: ${user.displayName || user.email}`;
+                    loginScreen.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    loadAndListenTransactions(currentUserId);
+                } else {
+                    currentUserId = null;
+                    if (transactionsUnsubscribe) {
+                        transactionsUnsubscribe();
+                        transactionsUnsubscribe = null;
+                    }
+                    budgetTransactions = [];
+                    renderUI();
+                    loginScreen.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- Firestore Data Handling ---
+        const loadAndListenTransactions = (userId) => {
+            if (!userId || !db) return;
+            const transactionsRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+            const q = query(transactionsRef);
+
+            if (transactionsUnsubscribe) {
+                transactionsUnsubscribe();
+            }
+
+            transactionsUnsubscribe = onSnapshot(q, (snapshot) => {
+                budgetTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUI();
+            }, (error) => {
+                console.error("Error listening to transactions:", error);
+                showMessage("Gagal memuat data. Periksa koneksi Anda.", "error");
+            });
+        };
 
         // --- Core UI Rendering & Calculation ---
         function renderUI() {
@@ -283,41 +368,26 @@
         }
 
         function renderDashboard() {
-            // Calculate overall balance
             const totalBalance = budgetTransactions.reduce((total, t) => t.type === 'income' ? total + t.amount : total - t.amount, 0);
             currentBalance.textContent = formatRupiah(totalBalance);
 
-            // Filter for current month's transactions
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             
             const monthlyTransactions = budgetTransactions.filter(t => {
+                if (!t.date) return false;
                 const tDate = new Date(t.date);
                 return tDate >= startOfMonth && tDate <= endOfMonth;
             });
 
             const incomeThisMonth = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
             const expenseThisMonth = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
             monthlyIncome.textContent = formatRupiah(incomeThisMonth);
             monthlyExpense.textContent = formatRupiah(expenseThisMonth);
 
-            // Calculate and display Savings Rate
             const rate = incomeThisMonth > 0 ? ((incomeThisMonth - expenseThisMonth) / incomeThisMonth) * 100 : 0;
             savingsRate.textContent = `${Math.round(rate)}%`;
-
-            // Calculate and display Needs vs. Wants
-            const needsExpense = monthlyTransactions.filter(t => t.type === 'expense' && t.category === 'wajib').reduce((sum, t) => sum + t.amount, 0);
-            const wantsExpense = monthlyTransactions.filter(t => t.type === 'expense' && t.category === 'keinginan').reduce((sum, t) => sum + t.amount, 0);
-            const totalExpenseCategory = needsExpense + wantsExpense;
-            
-            const needsPerc = totalExpenseCategory > 0 ? (needsExpense / totalExpenseCategory) * 100 : 0;
-            const wantsPerc = totalExpenseCategory > 0 ? (wantsExpense / totalExpenseCategory) * 100 : 0;
-
-            needsWantsBar.style.width = `${needsPerc}%`;
-            needsPercentage.textContent = `Wajib: ${Math.round(needsPerc)}%`;
-            wantsPercentage.textContent = `Keinginan: ${Math.round(wantsPerc)}%`;
 
             renderExpensePieChart(monthlyTransactions);
         }
@@ -334,16 +404,12 @@
 
             const labels = Object.keys(expenseData);
             const data = Object.values(expenseData);
+            const backgroundColors = labels.map((_, i) => `hsl(${i * 40 + 200}, 70%, 60%)`);
+
+            if (expenseChart) expenseChart.destroy();
             
-            const backgroundColors = labels.map((_, i) => `hsl(${i * 40}, 70%, 60%)`);
-
-            if (expenseChart) {
-                expenseChart.destroy();
-            }
-
             if (labels.length === 0) {
-                 // Optionally, display a message if no data
-                return;
+                 return;
             }
             
             expenseChart = new Chart(ctx, {
@@ -362,28 +428,8 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += formatRupiah(context.parsed);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                        tooltip: { callbacks: { label: (c) => `${c.label}: ${formatRupiah(c.parsed)}` } }
                     }
                 }
             });
@@ -393,15 +439,26 @@
             transactionList.innerHTML = '';
             const searchTerm = transactionSearchInput.value.toLowerCase();
             const filtered = budgetTransactions
-                .filter(t => t.description.toLowerCase().includes(searchTerm))
+                .filter(t => {
+                    if (!searchTerm) return true;
+
+                    // Terjemahkan tipe transaksi ke Bahasa Indonesia untuk pencarian
+                    const translatedType = t.type === 'income' ? 'pemasukan' : 'pengeluaran';
+
+                    const formattedDate = new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toLowerCase();
+                    return (
+                        t.description.toLowerCase().includes(searchTerm) ||
+                        t.type.toLowerCase().includes(searchTerm) || // Pencarian asli (income/expense)
+                        translatedType.includes(searchTerm) ||       // Pencarian terjemahan (pemasukan/pengeluaran)
+                        t.amount.toString().includes(searchTerm) ||
+                        formattedDate.includes(searchTerm) ||
+                        t.date.includes(searchTerm)
+                    );
+                })
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if (filtered.length === 0) {
-                noTransactionsMessage.classList.remove('hidden');
-            } else {
-                noTransactionsMessage.classList.add('hidden');
-                filtered.forEach(t => transactionList.appendChild(createTransactionElement(t)));
-            }
+            noTransactionsMessage.classList.toggle('hidden', filtered.length > 0);
+            filtered.forEach(t => transactionList.appendChild(createTransactionElement(t)));
         }
         
         function createTransactionElement(transaction) {
@@ -410,18 +467,6 @@
 
             const typeClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
             const sign = transaction.type === 'income' ? '+' : '-';
-            
-            let categoryText = '-';
-            let categoryClass = 'text-gray-500';
-            if (transaction.type === 'expense') {
-                if (transaction.category === 'wajib') {
-                    categoryText = 'Wajib';
-                    categoryClass = 'bg-sky-100 text-sky-700';
-                } else if (transaction.category === 'keinginan') {
-                    categoryText = 'Keinginan';
-                    categoryClass = 'bg-indigo-100 text-indigo-700';
-                }
-            }
 
             tr.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -431,9 +476,6 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${typeClass}">
                     ${sign} ${formatRupiah(transaction.amount)}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    ${categoryText !== '-' ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryClass}">${categoryText}</span>` : '-'}
-                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button class="edit-btn text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
                     <button class="delete-btn text-red-600 hover:text-red-900">Hapus</button>
@@ -441,70 +483,79 @@
             `;
 
             tr.querySelector('.edit-btn').addEventListener('click', () => showAddEditTransactionModal(transaction.id));
-            tr.querySelector('.delete-btn').addEventListener('click', () => {
-                if(confirm(`Anda yakin ingin menghapus transaksi "${transaction.description}"?`)){
-                    deleteTransaction(transaction.id);
-                }
-            });
-
+            tr.querySelector('.delete-btn').addEventListener('click', () => showConfirmationModal(transaction));
             return tr;
         }
 
         // --- Transaction Logic ---
-        function saveTransaction() {
+        async function saveTransaction() {
+            if (!currentUserId) {
+                showMessage("Anda harus masuk untuk menyimpan transaksi.", "error");
+                return;
+            }
+
             const type = transactionTypeInput.value;
             const amount = parseFloat(transactionAmountInput.value);
-            const description = transactionDescriptionInput.value.trim();
+            const description = capitalizeWords(transactionDescriptionInput.value.trim());
             const date = transactionDateInput.value;
-            const category = transactionCategoryInput.value;
 
             if (isNaN(amount) || amount <= 0 || !description || !date) {
                 showMessage('Harap isi semua kolom dengan benar.', 'error');
                 return;
             }
 
-            if (editingTransactionId) {
-                const index = budgetTransactions.findIndex(t => t.id === editingTransactionId);
-                budgetTransactions[index] = { ...budgetTransactions[index], type, amount, description, date, category: type === 'expense' ? category : null };
-                showMessage('Transaksi berhasil diperbarui.', 'success');
-            } else {
-                budgetTransactions.push({ id: crypto.randomUUID(), type, amount, description, date, category: type === 'expense' ? category : null });
-                showMessage('Transaksi berhasil ditambahkan.', 'success');
-            }
+            const transactionData = { type, amount, description, date };
+            const collectionRef = collection(db, 'artifacts', appId, 'users', currentUserId, 'transactions');
 
-            saveTransactions();
-            renderUI();
-            hideAddEditTransactionModal();
+            try {
+                if (editingTransactionId) {
+                    const docRef = doc(collectionRef, editingTransactionId);
+                    await updateDoc(docRef, transactionData);
+                    showMessage('Transaksi berhasil diperbarui.', 'success');
+                } else {
+                    await addDoc(collectionRef, transactionData);
+                    showMessage('Transaksi berhasil ditambahkan.', 'success');
+                }
+                hideAddEditTransactionModal();
+            } catch (error) {
+                console.error("Error saving transaction:", error);
+                showMessage("Gagal menyimpan transaksi. Coba lagi.", "error");
+            }
         }
         
-        function deleteTransaction(id) {
-            budgetTransactions = budgetTransactions.filter(t => t.id !== id);
-            saveTransactions();
-            renderUI();
-            showMessage('Transaksi berhasil dihapus.', 'success');
+        async function deleteTransaction(id) {
+            if (!currentUserId || !id) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'transactions', id);
+            try {
+                await deleteDoc(docRef);
+                showMessage('Transaksi berhasil dihapus.', 'success');
+            } catch (error) {
+                console.error("Error deleting transaction:", error);
+                showMessage("Gagal menghapus transaksi. Coba lagi.", "error");
+            }
         }
 
-
         // --- Modal Handling ---
-        function showAddEditTransactionModal(id = null) {
+        function showAddEditTransactionModal(id = null, type = 'expense') {
             editingTransactionId = id;
             if (id) {
                 const t = budgetTransactions.find(t => t.id === id);
                 transactionModalTitle.textContent = 'Edit Transaksi';
+                transactionTypeContainer.style.display = 'block';
+                transactionTypeInput.disabled = false;
                 transactionTypeInput.value = t.type;
                 transactionAmountInput.value = t.amount;
                 transactionDescriptionInput.value = t.description;
                 transactionDateInput.value = t.date;
-                transactionCategoryInput.value = t.category || 'wajib';
             } else {
-                transactionModalTitle.textContent = 'Tambah Transaksi';
-                transactionTypeInput.value = 'expense';
+                transactionModalTitle.textContent = type === 'income' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
+                transactionTypeContainer.style.display = 'none';
+                transactionTypeInput.disabled = true;
+                transactionTypeInput.value = type;
                 transactionAmountInput.value = '';
                 transactionDescriptionInput.value = '';
                 transactionDateInput.value = formatDateToYYYYMMDD(new Date());
-                transactionCategoryInput.value = 'wajib';
             }
-            toggleCategoryVisibility();
             addEditTransactionModal.classList.remove('hidden');
             transactionAmountInput.focus();
         }
@@ -512,9 +563,23 @@
         function hideAddEditTransactionModal() {
             addEditTransactionModal.classList.add('hidden');
         }
-        
-        function toggleCategoryVisibility() {
-            categoryContainer.style.display = transactionTypeInput.value === 'expense' ? 'block' : 'none';
+
+        function showConfirmationModal(transaction) {
+            confirmationMessage.textContent = `Apakah Anda yakin ingin menghapus transaksi "${transaction.description}"?`;
+            confirmationModal.classList.remove('hidden');
+            
+            const newConfirmButton = confirmDeleteButton.cloneNode(true);
+            confirmDeleteButton.parentNode.replaceChild(newConfirmButton, confirmDeleteButton);
+            confirmDeleteButton = newConfirmButton;
+            
+            confirmDeleteButton.addEventListener('click', () => {
+                deleteTransaction(transaction.id);
+                hideConfirmationModal();
+            }, { once: true });
+        }
+
+        function hideConfirmationModal() {
+            confirmationModal.classList.add('hidden');
         }
 
         // --- Export to Excel ---
@@ -539,15 +604,35 @@
                 showMessage('Harap pilih tanggal mulai dan tanggal akhir.', 'error');
                 return;
             }
-
             const startDate = new Date(startDateString);
+            startDate.setHours(0, 0, 0, 0);
             const endDate = new Date(endDateString);
-            endDate.setHours(23, 59, 59, 999); // Include the end date fully
+            endDate.setHours(23, 59, 59, 999);
 
             if (startDate > endDate) {
                 showMessage('Tanggal mulai tidak boleh setelah tanggal akhir.', 'error');
                 return;
             }
+
+            const groupTransactions = (transactions) => {
+                const grouped = transactions.reduce((acc, t) => {
+                    const desc = t.description.trim();
+                    if (!acc[desc]) {
+                        acc[desc] = { totalAmount: 0, count: 0 };
+                    }
+                    acc[desc].totalAmount += t.amount;
+                    acc[desc].count += 1;
+                    return acc;
+                }, {});
+
+                return Object.entries(grouped).map(([description, data]) => ({
+                    description: data.count > 1 ? `${description} (${data.count}x)` : description,
+                    amount: data.totalAmount
+                }));
+            };
+
+            const transactionsBefore = budgetTransactions.filter(t => new Date(t.date) < startDate);
+            const startingBalance = transactionsBefore.reduce((total, t) => t.type === 'income' ? total + t.amount : total - t.amount, 0);
 
             const filteredTransactions = budgetTransactions.filter(t => {
                 const transactionDate = new Date(t.date);
@@ -558,128 +643,105 @@
                 showMessage('Tidak ada transaksi dalam rentang tanggal yang dipilih.', 'error');
                 return;
             }
+
+            const incomeTransactions = filteredTransactions.filter(t => t.type === 'income');
+            const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
+
+            const groupedIncome = groupTransactions(incomeTransactions);
+            const groupedExpense = groupTransactions(expenseTransactions);
+
+            const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
             
-            // --- 1. Perhitungan Metrik ---
-            const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const totalExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const endingBalance = startingBalance + totalIncome - totalExpense;
             const netFlow = totalIncome - totalExpense;
-            const needsExpense = filteredTransactions.filter(t => t.type === 'expense' && t.category === 'wajib').reduce((sum, t) => sum + t.amount, 0);
-            const wantsExpense = filteredTransactions.filter(t => t.type === 'expense' && t.category === 'keinginan').reduce((sum, t) => sum + t.amount, 0);
             const savingsRateValue = totalIncome > 0 ? (netFlow / totalIncome) : 0;
-            const needsPercentage = totalExpense > 0 ? (needsExpense / totalExpense) * 100 : 0;
-            const wantsPercentage = totalExpense > 0 ? (wantsExpense / totalExpense) * 100 : 0;
 
-
-            // --- 2. Inisialisasi Workbook ---
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet([]); // Start with an empty sheet
-            ws['!merges'] = []; // Initialize merges array
-
-            // --- 3. Bangun Header & Ringkasan ---
-            let currentRow = 0;
-            
-            // Judul Utama
-            ws[`A${currentRow + 1}`] = { v: "Laporan Anggaran Cerdas", t: 's', s: { font: { bold: true, sz: 16, color: { rgb: "FFFFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } }, alignment: { horizontal: "center", vertical: "center" } } };
-            ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } }); // Merge A1:D1
-            currentRow++;
-
-            // Rentang Tanggal
-            const readableStartDate = new Date(startDateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+            const ws_data = [];
             const readableEndDate = new Date(endDateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            ws[`A${currentRow + 1}`] = { v: `Periode: ${readableStartDate} - ${readableEndDate}`, t: 's', s: { font: { italic: true, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } } };
-            ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } }); // Merge A2:D2
-            currentRow += 2; // Add a blank row after
+            ws_data.push(["Laporan Penganggaran"]);
+            ws_data.push([`PER ${readableEndDate}`]);
+            ws_data.push([]);
 
-            // Kartu Ringkasan
-            const summaryData = [
-                ["Total Pemasukan", {v: totalIncome, t: 'n', z: '"Rp"#,##0'}],
-                ["Total Pengeluaran", {v: totalExpense, t: 'n', z: '"Rp"#,##0'}],
-                ["Surplus / Defisit", {v: netFlow, t: 'n', z: '"Rp"#,##0'}],
-                ["Rasio Tabungan", {v: savingsRateValue, t: 'n', z: '0.00%'}],
-                [], // Blank Row
-                ["Pengeluaran Wajib", {v: needsExpense, t: 'n', z: '"Rp"#,##0'}, `(${(needsPercentage).toFixed(1)}%)`],
-                ["Pengeluaran Keinginan", {v: wantsExpense, t: 'n', z: '"Rp"#,##0'}, `(${(wantsPercentage).toFixed(1)}%)`],
-            ];
-            XLSX.utils.sheet_add_aoa(ws, summaryData, { origin: `A${currentRow + 1}` });
+            ws_data.push(["Saldo Awal :", null, startingBalance]);
+            ws_data.push([]);
+
+            ws_data.push(["Pemasukan"]);
+            groupedIncome.forEach(t => {
+                ws_data.push([`  ${t.description}`, null, t.amount]);
+            });
+            ws_data.push(["Total Pemasukan", null, totalIncome]);
+            ws_data.push([]);
+
+            ws_data.push(["Pengeluaran"]);
+            groupedExpense.forEach(t => {
+                ws_data.push([`  ${t.description}`, null, t.amount]);
+            });
+            ws_data.push(["Total Pengeluaran", null, totalExpense]);
+            ws_data.push([]);
+
+            ws_data.push(["Saldo Akhir :", null, endingBalance]);
+            ws_data.push([]);
+
+            ws_data.push(["Ringkasan Analisis"]);
+            ws_data.push(["Surplus / Defisit", null, netFlow]);
+            ws_data.push(["Rasio Tabungan", null, savingsRateValue]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            const boldStyle = { font: { bold: true } };
+            const titleStyle = { font: { bold: true, sz: 14 } };
+            const currencyFormat = '"Rp"#,##0;[Red]"Rp"-#,##0';
+            const percentageFormat = '0.0%';
+
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+            if(ws['A1']) ws['A1'].s = titleStyle;
+            ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 2 } });
             
-            // Styling Ringkasan
-            for (let i = 0; i < summaryData.length; i++) {
-                const rowNum = currentRow + i + 1;
-                if (ws[`A${rowNum}`]) ws[`A${rowNum}`].s = { font: { bold: true } };
-                if (ws[`B${rowNum}`] && ws[`B${rowNum}`].z) {
-                     ws[`B${rowNum}`].s = { font: { bold: true }, numFmt: ws[`B${rowNum}`].z };
-                }
-                 if (i === 2 && netFlow < 0) { // Highlight net flow if negative
-                    if(ws[`B${rowNum}`]) ws[`B${rowNum}`].s.font.color = { rgb: "990000" };
-                }
-            }
+            let currentRow = 3;
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
+            currentRow += 2;
 
-            currentRow += summaryData.length + 1; // Move to next section
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            currentRow++;
+            groupedIncome.forEach(() => {
+                const cellAddress = `C${currentRow + 1}`;
+                if (ws[cellAddress]) { ws[cellAddress].z = currencyFormat; }
+                currentRow++;
+            });
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
+            currentRow += 2;
 
-            // --- 4. Bangun Tabel Rincian Transaksi ---
-            const incomeTransactions = filteredTransactions.filter(t => t.type === 'income').sort((a,b) => new Date(a.date) - new Date(b.date));
-            const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense').sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            // Tabel Pemasukan
-            if (incomeTransactions.length > 0) {
-                 ws[`A${currentRow + 1}`] = { v: "Rincian Pemasukan", t: 's', s: { font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "16A34A" } }, alignment: { horizontal: "center" } } };
-                 ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } });
-                 currentRow++;
-                 
-                 const incomeHeaders = ["Tanggal", "Deskripsi", "", "Jumlah"];
-                 XLSX.utils.sheet_add_aoa(ws, [incomeHeaders], { origin: `A${currentRow + 1}` });
-                 for (let i=0; i<incomeHeaders.length; i++) ws[XLSX.utils.encode_cell({r:currentRow, c:i})].s = { font: { bold: true }, fill: { fgColor: { rgb: "D1FAE5" } }};
-                 ws['!merges'].push({ s: { r: currentRow, c: 1 }, e: { r: currentRow, c: 2 } }); // Merge deskripsi header
-                 currentRow++;
-
-                 const incomeData = incomeTransactions.map(t => [ new Date(t.date), t.description, "", t.amount ]);
-                 XLSX.utils.sheet_add_aoa(ws, incomeData, { origin: `A${currentRow + 1}`, cellDates: true });
-                 
-                 // Formatting for income data
-                 for(let i=0; i < incomeData.length; i++) {
-                    const r = currentRow + i;
-                    ws[XLSX.utils.encode_cell({r, c: 0})].z = 'dd-mmm-yyyy';
-                    ws[XLSX.utils.encode_cell({r, c: 3})].t = 'n';
-                    ws[XLSX.utils.encode_cell({r, c: 3})].z = '"Rp"#,##0';
-                    ws['!merges'].push({ s: { r: r, c: 1 }, e: { r: r, c: 2 } }); // Merge description cells
-                 }
-                 currentRow += incomeData.length + 1;
-            }
-
-            // Tabel Pengeluaran
-            if (expenseTransactions.length > 0) {
-                 ws[`A${currentRow + 1}`] = { v: "Rincian Pengeluaran", t: 's', s: { font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "DC2626" } }, alignment: { horizontal: "center" } } };
-                 ws['!merges'].push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 3 } });
-                 currentRow++;
-                 
-                 const expenseHeaders = ["Tanggal", "Deskripsi", "Kategori", "Jumlah"];
-                 XLSX.utils.sheet_add_aoa(ws, [expenseHeaders], { origin: `A${currentRow + 1}` });
-                 for (let i=0; i<expenseHeaders.length; i++) ws[XLSX.utils.encode_cell({r:currentRow, c:i})].s = { font: { bold: true }, fill: { fgColor: { rgb: "FEE2E2" } }};
-                 currentRow++;
-
-                 const expenseData = expenseTransactions.map(t => [ new Date(t.date), t.description, t.category === 'wajib' ? 'Wajib' : 'Keinginan', t.amount ]);
-                 XLSX.utils.sheet_add_aoa(ws, expenseData, { origin: `A${currentRow + 1}`, cellDates: true });
-
-                 // Formatting for expense data
-                 for(let i=0; i < expenseData.length; i++) {
-                    const r = currentRow + i;
-                    ws[XLSX.utils.encode_cell({r: r, c: 0})].z = 'dd-mmm-yyyy';
-                    ws[XLSX.utils.encode_cell({r: r, c: 3})].t = 'n';
-                    ws[XLSX.utils.encode_cell({r: r, c: 3})].z = '"Rp"#,##0';
-                 }
-            }
-
-            // --- 5. Finalisasi & Download ---
-            ws['!cols'] = [
-                { wch: 20 }, // A: Tanggal / Label Ringkasan
-                { wch: 35 }, // B: Deskripsi / Nilai Ringkasan
-                { wch: 20 }, // C: Kategori
-                { wch: 20 }  // D: Jumlah
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan Anggaran");
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            currentRow++;
+            groupedExpense.forEach(() => {
+                const cellAddress = `C${currentRow + 1}`;
+                if (ws[cellAddress]) { ws[cellAddress].z = currencyFormat; }
+                currentRow++;
+            });
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
+            currentRow += 2;
             
-            const fileName = `Laporan_Anggaran_${startDateString}_${endDateString}.xlsx`;
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
+            currentRow += 2;
+
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            currentRow++;
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
+            currentRow++;
+            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
+            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: percentageFormat };
+
+            ws['!cols'] = [ { wch: 35 }, { wch: 10 }, { wch: 20 } ];
+
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Penganggaran");
+            const fileName = `Laporan_Penganggaran_PER_${endDateString}.xlsx`;
             XLSX.writeFile(wb, fileName);
 
             hideExportBudgetModal();
@@ -687,18 +749,17 @@
         }
 
         // --- Event Listeners ---
-        addTransactionButton.addEventListener('click', () => showAddEditTransactionModal());
+        loginButton.addEventListener('click', loginWithGoogle);
+        logoutButton.addEventListener('click', logout);
+        addIncomeButton.addEventListener('click', () => showAddEditTransactionModal(null, 'income'));
+        addExpenseButton.addEventListener('click', () => showAddEditTransactionModal(null, 'expense'));
         cancelTransactionButton.addEventListener('click', hideAddEditTransactionModal);
         confirmTransactionButton.addEventListener('click', saveTransaction);
-        transactionTypeInput.addEventListener('change', toggleCategoryVisibility);
         transactionSearchInput.addEventListener('input', renderTransactionList);
-        
         exportBudgetButton.addEventListener('click', showExportBudgetModal);
         cancelExportButton.addEventListener('click', hideExportBudgetModal);
         confirmExportButton.addEventListener('click', exportToXlsx);
-
-        // --- Initialization ---
-        window.onload = loadTransactions;
+        cancelConfirmationButton.addEventListener('click', hideConfirmationModal);
 
     </script>
 </body>
