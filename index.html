@@ -654,8 +654,6 @@
             const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
             
             const endingBalance = startingBalance + totalIncome - totalExpense;
-            const netFlow = totalIncome - totalExpense;
-            const savingsRateValue = totalIncome > 0 ? (netFlow / totalIncome) : 0;
 
             const ws_data = [];
             const readableEndDate = new Date(endDateString).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -681,11 +679,6 @@
             ws_data.push([]);
 
             ws_data.push(["Saldo Akhir :", null, endingBalance]);
-            ws_data.push([]);
-
-            ws_data.push(["Ringkasan Analisis"]);
-            ws_data.push(["Surplus / Defisit", null, netFlow]);
-            ws_data.push(["Rasio Tabungan", null, savingsRateValue]);
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
@@ -693,7 +686,6 @@
             const boldStyle = { font: { bold: true } };
             const titleStyle = { font: { bold: true, sz: 14 } };
             const currencyFormat = '"Rp"#,##0;[Red]"Rp"-#,##0';
-            const percentageFormat = '0.0%';
 
             ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
             if(ws['A1']) ws['A1'].s = titleStyle;
@@ -728,15 +720,6 @@
             
             if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
             if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
-            currentRow += 2;
-
-            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
-            currentRow++;
-            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
-            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: currencyFormat };
-            currentRow++;
-            if(ws[`A${currentRow + 1}`]) ws[`A${currentRow + 1}`].s = boldStyle;
-            if(ws[`C${currentRow + 1}`]) ws[`C${currentRow + 1}`].s = { ...boldStyle, numFmt: percentageFormat };
 
             ws['!cols'] = [ { wch: 35 }, { wch: 10 }, { wch: 20 } ];
 
