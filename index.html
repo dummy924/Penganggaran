@@ -2993,13 +2993,13 @@
                             <h4 class="text-lg font-bold text-slate-200">${inv.name}</h4>
                             <span class="material-symbols-outlined action-icon" data-action="edit-investment" data-id="${inv.id}" aria-label="Edit Aset">edit</span>
                         </div>
-                        <div class="flex justify-between items-end mt-2">
+                        <div class="flex flex-wrap justify-between items-end mt-2">
                             <div>
                                 <p class="text-xs text-slate-400">Total Nilai Kini</p>
-                                <p class="text-xl font-bold text-slate-100">${formatCompactCurrency(currentValue)}</p>
+                                <p class="text-lg sm:text-xl font-bold text-slate-100">${formatCompactCurrency(currentValue)}</p>
                             </div>
-                            <div class="text-right ${profitColor}">
-                                <p class="font-semibold">${formatCompactCurrency(profitLoss)}</p>
+                            <div class="text-right ${profitColor} pl-2">
+                                <p class="font-medium sm:font-semibold">${formatCompactCurrency(profitLoss)}</p>
                                 <p class="text-xs">(${profitLossPercent.toFixed(2)}%)</p>
                             </div>
                         </div>
@@ -3134,7 +3134,7 @@
             
             const absValue = Math.abs(value);
             let a, b;
-
+        
             if (absValue >= 1e12) {
                 a = value / 1e12;
                 b = ' T'; // Triliun
@@ -3144,17 +3144,20 @@
             } else if (absValue >= 1e6) {
                 a = value / 1e6;
                 b = ' Jt'; // Juta
+            } else if (absValue >= 1e3) { // <-- BAGIAN BARU DITAMBAHKAN
+                a = value / 1e3;
+                b = ' Rb'; // Ribu
             } else {
-                // Untuk angka di bawah 1 Juta, gunakan format biasa
+                // Untuk angka di bawah 1.000, gunakan format biasa
                 return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
             }
-
+        
             // Format angka yang disingkat dengan maksimal 1 angka desimal
             const formattedA = new Intl.NumberFormat('id-ID', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 1
             }).format(a);
-
+        
             return `Rp ${formattedA}${b}`;
         }
     </script>
