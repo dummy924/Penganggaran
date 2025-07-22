@@ -348,6 +348,54 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div class="lg:col-span-3 space-y-8">
+                <section id="transaction-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg" style="display: none;">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-blue-400"><i data-lucide="arrow-left-right"></i> Transaksi</h2>
+                    <form id="transaction-form" class="space-y-3 mb-6">
+                        <h3 class="font-semibold text-slate-300">Tambah Transaksi Baru</h3>
+                        <input type="text" id="transaction-description" placeholder="Deskripsi" class="input-field" required>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="number" id="transaction-amount" placeholder="Jumlah" class="input-field" min="0" required>
+                            <select id="transaction-type" class="input-field">
+                                <option value="expense">Pengeluaran</option>
+                                <option value="income">Pemasukan</option>
+                            </select>
+                            <select id="transaction-category" class="input-field">
+                                <option value="">Pilih Kategori...</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-full"><i data-lucide="plus-circle" class="icon"></i> Tambah Transaksi</button>
+                    </form>
+                    <hr class="border-slate-700 my-6">
+                    <div>
+                        <div class="flex flex-wrap justify-between items-center gap-4 mb-3">
+                             <h3 class="font-semibold text-slate-300">Riwayat Transaksi</h3>
+                             <div id="transaction-actions">
+                                <button id="delete-selected-btn" data-action="delete-selected" class="btn btn-danger w-full sm:w-auto text-sm py-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    <span class="material-symbols-outlined icon pointer-events-none">delete</span> Hapus
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-4">
+                           <input type="checkbox" id="select-all-transactions" class="custom-checkbox rounded">
+                           <label for="select-all-transactions" class="text-slate-300">Pilih Semua</label>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 mb-2 p-4 bg-slate-900/50 rounded-lg">
+                            <input type="text" id="filter-text" placeholder="Cari deskripsi, jumlah, atau tanggal..." class="input-field flex-grow">
+                            <div class="flex gap-2">
+                                <button id="sort-btn" class="btn bg-slate-700 hover:bg-slate-600 !p-2.5" aria-label="Ubah Urutan">
+                                    <svg id="sort-icon-desc" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                                    <svg id="sort-icon-asc" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/></svg>
+                                </button>
+                                <button id="filter-btn" class="btn bg-slate-700 hover:bg-slate-600 !p-2.5" aria-label="Filter Transaksi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                         <p id="transaction-count" class="text-xs text-slate-400 mb-4 px-4"></p>
+                        <div id="transaction-list" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+                    </div>
+                </section>
+                
                 <section id="category-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <div class="sm:flex sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-amber-400">
@@ -411,54 +459,6 @@
                     <p class="text-slate-300 mb-6 max-w-2xl mx-auto">Untuk memulai, buatlah kategori anggaran pertamamu di atas.</p>
                     <i data-lucide="mouse-pointer-click" class="text-amber-500 w-16 h-16 mx-auto animate-bounce"></i>
                 </div>
-
-                <section id="transaction-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg" style="display: none;">
-                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-blue-400"><i data-lucide="arrow-left-right"></i> Transaksi</h2>
-                    <form id="transaction-form" class="space-y-3 mb-6">
-                        <h3 class="font-semibold text-slate-300">Tambah Transaksi Baru</h3>
-                        <input type="text" id="transaction-description" placeholder="Deskripsi" class="input-field" required>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input type="number" id="transaction-amount" placeholder="Jumlah" class="input-field" min="0" required>
-                            <select id="transaction-type" class="input-field">
-                                <option value="expense">Pengeluaran</option>
-                                <option value="income">Pemasukan</option>
-                            </select>
-                            <select id="transaction-category" class="input-field">
-                                <option value="">Pilih Kategori...</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-secondary w-full"><i data-lucide="plus-circle" class="icon"></i> Tambah Transaksi</button>
-                    </form>
-                    <hr class="border-slate-700 my-6">
-                    <div>
-                        <div class="flex flex-wrap justify-between items-center gap-4 mb-3">
-                             <h3 class="font-semibold text-slate-300">Riwayat Transaksi</h3>
-                             <div id="transaction-actions">
-                                <button id="delete-selected-btn" data-action="delete-selected" class="btn btn-danger w-full sm:w-auto text-sm py-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <span class="material-symbols-outlined icon pointer-events-none">delete</span> Hapus
-                                </button>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 mb-4">
-                           <input type="checkbox" id="select-all-transactions" class="custom-checkbox rounded">
-                           <label for="select-all-transactions" class="text-slate-300">Pilih Semua</label>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-3 mb-2 p-4 bg-slate-900/50 rounded-lg">
-                            <input type="text" id="filter-text" placeholder="Cari deskripsi, jumlah, atau tanggal..." class="input-field flex-grow">
-                            <div class="flex gap-2">
-                                <button id="sort-btn" class="btn bg-slate-700 hover:bg-slate-600 !p-2.5" aria-label="Ubah Urutan">
-                                    <svg id="sort-icon-desc" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
-                                    <svg id="sort-icon-asc" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/></svg>
-                                </button>
-                                <button id="filter-btn" class="btn bg-slate-700 hover:bg-slate-600 !p-2.5" aria-label="Filter Transaksi">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                         <p id="transaction-count" class="text-xs text-slate-400 mb-4 px-4"></p>
-                        <div id="transaction-list" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
-                    </div>
-                </section>
                 
                 <section id="goals-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
@@ -2993,18 +2993,16 @@
                             <h4 class="text-lg font-bold text-slate-200">${inv.name}</h4>
                             <span class="material-symbols-outlined action-icon" data-action="edit-investment" data-id="${inv.id}" aria-label="Edit Aset">edit</span>
                         </div>
-
                         <div class="flex justify-between items-end mt-2">
                             <div>
                                 <p class="text-xs text-slate-400">Total Nilai Kini</p>
-                                <p class="text-xl font-bold text-slate-100">${formatCurrency(currentValue)}</p>
+                                <p class="text-xl font-bold text-slate-100">${formatCompactCurrency(currentValue)}</p>
                             </div>
                             <div class="text-right ${profitColor}">
-                                <p class="font-semibold">${formatCurrency(profitLoss)}</p>
+                                <p class="font-semibold">${formatCompactCurrency(profitLoss)}</p>
                                 <p class="text-xs">(${profitLossPercent.toFixed(2)}%)</p>
                             </div>
                         </div>
-
                         <div class="mt-3 pt-3 border-t border-slate-700/50">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                 <div>
@@ -3013,11 +3011,11 @@
                                 </div>
                                 <div>
                                     <p class="text-slate-400">Harga Beli (rata-rata)</p>
-                                    <p>${formatCurrency(inv.avgPrice)}</p>
+                                    <p>${formatCompactCurrency(inv.avgPrice)}</p>
                                 </div>
                                 <div class="mt-1">
                                     <p class="text-slate-400">Harga Kini (per unit)</p>
-                                    <p>${formatCurrency(inv.currentPrice || inv.avgPrice)}</p>
+                                    <p>${formatCompactCurrency(inv.currentPrice || inv.avgPrice)}</p>
                                 </div>
                             </div>
                         </div>
