@@ -1111,11 +1111,12 @@
             }).join('') || `<p class="text-slate-500 text-center py-4">Tidak ada transaksi yang cocok.</p>`;
         }
         
-        // PERBAIKAN: Logika perhitungan XP untuk naik level dibuat konsisten.
+        // Sistem Level Baru (Peningkatan 26% setiap 10 Level)
         function getXpNeededForLevelUp(level) {
-            // Formula sederhana: 100 XP untuk level 1, dan meningkat 15% setiap levelnya.
-            // Ini memastikan progresi yang mulus dan dapat diprediksi.
-            return Math.floor(100 * Math.pow(1.15, level - 1));
+            // Menentukan blok 10 level (0 untuk level 1-10, 1 untuk 11-20, dst.)
+            const tier = Math.floor((level - 1) / 10);
+            // Menghitung biaya XP berdasarkan bloknya, meningkat 26% setiap blok.
+            return Math.floor(100 * Math.pow(1.26, tier));
         }
 
         function calculateLevelAndProgress(totalXp) {
