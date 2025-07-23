@@ -471,13 +471,22 @@
                         <input type="checkbox" id="select-all-goals" class="custom-checkbox rounded">
                         <label for="select-all-goals" class="text-slate-300">Pilih Semua</label>
                     </div>
-                    <form id="goal-form" class="space-y-3 mb-6">
-                        <input type="text" id="goal-name" placeholder="Nama Tujuan (misal: Dana Darurat)" class="input-field" required>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <input type="number" id="goal-target" placeholder="Jumlah Target" class="input-field" min="0" required>
-                            <input type="date" id="goal-date" class="input-field" required>
+                    <form id="goal-form" class="space-y-4 mb-6">
+                        <div>
+                            <label for="goal-name" class="block text-sm font-medium text-slate-300 mb-1">Nama Tujuan</label>
+                            <input type="text" id="goal-name" placeholder="Contoh: Dana Darurat" class="input-field" required>
                         </div>
-                        <button type="submit" class="btn btn-secondary w-full"><span class="material-symbols-outlined icon">add_circle</span> Tambah Tujuan</button>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="goal-target" class="block text-sm font-medium text-slate-300 mb-1">Jumlah Target</label>
+                                <input type="number" id="goal-target" placeholder="Contoh: 5000000" class="input-field" min="0" required>
+                            </div>
+                            <div>
+                                <label for="goal-date" class="block text-sm font-medium text-slate-300 mb-1">Tanggal Target</label>
+                                <input type="date" id="goal-date" class="input-field" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-full !mt-6 pt-3 pb-3"><span class="material-symbols-outlined icon">add_circle</span> Tambah Tujuan</button>
                     </form>
                     <div class="mb-4">
                         <input type="text" id="goal-search" placeholder="Cari tujuan..." class="input-field">
