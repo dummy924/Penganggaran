@@ -48,22 +48,29 @@
             background-color: #D97706; /* bg-amber-600 */
             color: white;
         }
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background-color: #B45309; /* bg-amber-700 */
         }
         .btn-secondary {
              background-color: #2563EB; /* bg-blue-600 */
              color: white;
         }
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background-color: #1D4ED8; /* bg-blue-700 */
         }
         .btn-danger {
             background-color: #DC2626; /* bg-red-600 */
             color: white;
         }
-        .btn-danger:hover {
+        .btn-danger:hover:not(:disabled) {
             background-color: #B91C1C; /* bg-red-700 */
+        }
+        .btn-success {
+             background-color: #16A34A; /* bg-green-600 */
+             color: white;
+        }
+        .btn-success:hover:not(:disabled) {
+            background-color: #15803D; /* bg-green-700 */
         }
         .btn-google {
             background-color: #FFFFFF;
@@ -72,6 +79,10 @@
         }
         .btn-google:hover {
             background-color: #F9FAFB;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .icon {
             width: 18px;
@@ -273,7 +284,6 @@
 
         <div id="error-display" class="bg-red-500/20 text-red-300 p-3 rounded-lg mb-6 text-center hidden"></div>
         
-        <!-- PERBAIKAN: Section untuk notifikasi pintar -->
         <div id="smart-reminder-section" class="mb-8 space-y-4"></div>
 
         <div class="mb-8">
@@ -347,8 +357,8 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div class="lg:col-span-3 space-y-8">                
-                <section id="transaction-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg" style="display: none;">
+            <div class="lg:col-span-3 space-y-8">
+                <section id="transaction-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-blue-400"><i data-lucide="arrow-left-right"></i> Transaksi</h2>
                     <form id="transaction-form" class="space-y-3 mb-6">
                         <h3 class="font-semibold text-slate-300">Tambah Transaksi Baru</h3>
@@ -396,11 +406,36 @@
                     </div>
                 </section>
 
-                <div id="welcome-panel" class="bg-slate-800 p-8 rounded-2xl shadow-lg text-center" style="display: none;">
+                <div id="welcome-panel" class="bg-slate-800 p-8 rounded-2xl shadow-lg text-center">
                     <h2 class="text-3xl font-bold text-amber-400 mb-4">Selamat Datang di Budget Quest!</h2>
                     <p class="text-slate-300 mb-6 max-w-2xl mx-auto">Untuk memulai, buatlah kategori anggaran pertamamu di atas.</p>
                     <i data-lucide="mouse-pointer-click" class="text-amber-500 w-16 h-16 mx-auto animate-bounce"></i>
                 </div>
+
+                <section id="personal-transfer-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-blue-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>Transfer Dana</h2>
+                    <form id="personal-transfer-form" class="space-y-4">
+                        <div><label for="recipient-user-id" class="block text-sm font-medium text-slate-300 mb-1">User ID Penerima</label><input type="text" id="recipient-user-id" placeholder="Salin User ID dari aplikasi tujuan" class="input-field" required></div>
+                        <div>
+                          <label for="recipient-profile-id" class="block text-sm font-medium text-slate-300 mb-1">Profil Tujuan</label>
+                          <select id="recipient-profile-id" class="input-field" required>
+                            <option value="" disabled selected>Pilih Tipe Profil Tujuan...</option>
+                            <option value="personal_profile">Profil Pribadi</option>
+                            <option value="corporate_profile">Profil Perusahaan</option>
+                          </select>
+                        </div>
+                        <div><label for="personal-transfer-amount" class="block text-sm font-medium text-slate-300 mb-1">Jumlah</label><input type="number" id="personal-transfer-amount" placeholder="Jumlah transfer" class="input-field" min="1" required></div>
+                        <div><label for="personal-transfer-desc" class="block text-sm font-medium text-slate-300 mb-1">Deskripsi</label><input type="text" id="personal-transfer-desc" placeholder="misal: Pengembalian dana" class="input-field" required></div>
+                        <button type="submit" class="btn btn-secondary w-full !mt-6"><span class="material-symbols-outlined icon">send</span> Kirim Dana</button>
+                    </form>
+                    <hr class="border-slate-700 my-6">
+                    <div>
+                        <h3 class="font-semibold text-slate-300 mb-4">Riwayat Transfer Terkirim</h3>
+                        <div id="personal-transfer-history-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            <p class="text-slate-500 text-center">Belum ada riwayat transfer.</p>
+                        </div>
+                    </div>
+                </section>
                 
                 <section id="category-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <div class="sm:flex sm:justify-between sm:items-center gap-4 mb-4">
@@ -417,7 +452,6 @@
                         <input type="checkbox" id="select-all-categories" class="custom-checkbox rounded">
                         <label for="select-all-categories" class="text-slate-300">Pilih Semua</label>
                     </div>
-                    <!-- PERBAIKAN: Form kategori ditambahkan pilihan Tipe Anggaran -->
                     <form id="category-form" class="space-y-3 mb-6">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" id="category-name" placeholder="Nama Kategori" class="input-field" required>
@@ -459,7 +493,7 @@
                     </div>
                     <div id="income-category-list" class="space-y-4"></div>
                 </section>
-
+                
                 <section id="goals-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-cyan-400"><i data-lucide="flag"></i> Tujuan Keuangan</h2>
@@ -530,10 +564,9 @@
                         <div class="mt-2 sm:mt-0">
                             <div id="user-level" class="text-2xl sm:text-3xl font-bold text-amber-400 flex items-center gap-2 justify-start sm:justify-end">
                                 <span class="material-symbols-outlined text-3xl">gamepad</span>
-                                <span>Lv. 16</span>
+                                <span>Lv. 1</span>
                             </div>
                         </div>
-
                     </div>
 
                     <div class="w-full">
@@ -596,6 +629,7 @@
     </main>
 
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/60 z-40"></div>
+    <div id="personal-transfer-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     <div id="edit-category-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     <div id="edit-income-category-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     <div id="edit-transaction-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
@@ -719,7 +753,6 @@
             <h3>Anggaran Kategori</h3>
             <ul>
                 <li><strong>Membuat Kategori:</strong> Cukup isi nama (misal: "Transportasi") dan tentukan anggaran bulanannya.</li>
-                <!-- PERBAIKAN: Penjelasan Tipe Kategori diperbarui -->
                 <li><strong>Tipe Kategori:</strong> Pilih 'Tagihan' untuk pengeluaran rutin yang harus dipenuhi (misal: sewa, listrik) atau 'Batas Belanja' untuk pengeluaran yang ingin Anda batasi (misal: makan, hiburan).</li>
                 <li><strong>Arsipkan:</strong> Tombol ini tidak menghapus kategori, melainkan menyembunyikannya dari daftar aktif.</li>
                 <li><strong>Tantangan (🚩):</strong> Klik ikon bendera untuk menandai kategori sebagai 'Tantangan'. Ini akan mengaktifkan misi mingguan 'Tanpa Belanja' untuk kategori tersebut.</li>
@@ -749,6 +782,9 @@
             appId: "1:991890030945:web:8707184aaf989f597a0520"
         };
 
+        const appId = firebaseConfig.projectId;
+        const PERSONAL_PROFILE_ID = "personal_profile";
+
         let db, auth, userId;
         let allTransactions = [];
         let categories = [];
@@ -756,6 +792,7 @@
         let financialGoals = [];
         let debts = [];
         let investments = [];
+        let personalTransfers = []; // Variabel baru untuk riwayat transfer
 
         let categoryMap = {};
         let userProfile = { level: 1, xp: 0, completedQuests: {}, failedQuests: {}, inventory: {}, activeBoosts: {}, lastPenaltyCheck: null, hasReadGuide: false, hasReadDashboardGuide: false, questRewards: {} }; 
@@ -785,6 +822,7 @@
         const errorDisplay = el('error-display');
         const offlineIndicator = el('offline-indicator');
         const welcomePanel = el('welcome-panel');
+        const mainContentPanel = el('main-content-panel'); 
         const transactionSection = el('transaction-section');
         const googleSignInBtn = el('google-signin-btn');
         const signOutBtn = el('signout-btn');
@@ -822,6 +860,7 @@
         const editGoalModal = el('edit-goal-modal');
         const editInvestmentModal = el('edit-investment-modal');
         const addFundsGoalModal = el('add-funds-goal-modal');
+        const personalTransferModal = el('personal-transfer-modal');
 
         const deleteSelectedGoalsBtn = el('delete-selected-goals-btn');
         const deleteSelectedDebtsBtn = el('delete-selected-debts-btn');
@@ -840,8 +879,6 @@
             'exp_boost_x2': { name: 'Kartu XP Boost x2', description: 'Gandakan semua XP yang didapat selama 1 bulan.', icon: 'rocket_launch', iconColor: 'text-violet-400', footerColor: 'bg-violet-500' }
         };
         
-        // --- Gamification Logic ---
-
         function defineQuests() {
             const baseQuests = [
                 { id: 'q1', text: 'Catat transaksi pertamamu', xp: 20, category: 'Misi Dasar', type: 'log_transaction_total', target: 1, recurring: false },
@@ -887,21 +924,15 @@
         const hideError = () => errorDisplay.classList.add('hidden');
 
         const formatDashboardValue = (value) => {
-            // Menggunakan fungsi baru untuk menyingkat angka jika perlu
             const formattedValue = formatCompactCurrency(value); 
             const len = formattedValue.length;
-
-            // Ukuran font tetap dinamis, namun sekarang berdasarkan teks yang lebih pendek
-            let fontSize = '1.875rem'; // text-3xl
-            if (len > 15) fontSize = '1.25rem'; // text-xl
-            else if (len > 10) fontSize = '1.5rem'; // text-2xl
-            
-            // Khusus untuk 'Rp 0' atau nilai kecil lainnya
+            let fontSize = '1.875rem'; 
+            if (len > 15) fontSize = '1.25rem'; 
+            else if (len > 10) fontSize = '1.5rem'; 
             if (Math.abs(value) < 1000000) {
                 const originalFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
                 if (originalFormatted.length > 12) fontSize = '1.5rem';
             }
-
             return `<span style="font-size: ${fontSize}; line-height: 1.2;">${formattedValue}</span>`;
         };
 
@@ -924,13 +955,12 @@
             renderQuests();
             updateUserProfileUI();
             renderCharts();
-            renderSmartReminders(); // PERBAIKAN: Memanggil fungsi pengingat baru
-            
+            renderSmartReminders(); 
             renderGoals();
             renderDebts();
             renderInvestments();
             renderTopSpendingCategories();
-
+            renderPersonalTransfers(); // Panggil fungsi render transfer
             updateActionButtonsState();
 
             const sortIconDesc = el('sort-icon-desc'), sortIconAsc = el('sort-icon-asc');
@@ -939,8 +969,8 @@
                 sortIconAsc.classList.toggle('hidden', sortDirection !== 'asc');
             }
             const hasCategories = categories.filter(c => !c.isArchived).length > 0;
-            welcomePanel.style.display = hasCategories ? 'none' : 'block';
-            transactionSection.style.display = hasCategories ? 'block' : 'none';
+            welcomePanel.classList.toggle('hidden', hasCategories);
+            transactionSection.classList.toggle('hidden', !hasCategories);
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
         
@@ -994,7 +1024,6 @@
                 const progressColor = cat.progress > 100 ? 'bg-red-500' : cat.progress > 75 ? 'bg-yellow-500' : 'bg-green-500';
                 const isSelected = selectedCategories.has(cat.id);
                 const isChallenge = cat.isChallenge || false;
-                // PERBAIKAN: Menampilkan label tipe kategori
                 const typeLabel = cat.type === 'limit' ? 'Batas Belanja' : 'Tagihan';
                 const typeColor = cat.type === 'limit' ? 'text-cyan-400' : 'text-yellow-400';
 
@@ -1077,7 +1106,6 @@
                 const categoryName = categoryMap[t.category] || 'Tanpa Kategori';
                 const isSelected = selectedTransactions.has(t.id);
                 const dateStr = new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                // ... di dalam return `renderTransactions`
                 return `
                     <div>
                         <div class="bg-slate-700/50 p-3 rounded-lg flex flex-wrap justify-between items-center gap-x-3 gap-y-2 sm:hidden">
@@ -1113,12 +1141,48 @@
                 `;
             }).join('') || `<p class="text-slate-500 text-center py-4">Tidak ada transaksi yang cocok.</p>`;
         }
+
+        function renderPersonalTransfers() {
+            const listEl = el('personal-transfer-history-list');
+
+            // Pengecekan keamanan jika elemen HTML tidak ditemukan
+            if (!listEl) {
+                console.error("Elemen #personal-transfer-history-list tidak ditemukan!");
+                return;
+            }
+
+            // Tampilkan pesan jika tidak ada data transfer
+            if (personalTransfers.length === 0) {
+                listEl.innerHTML = `<p class="text-slate-500 text-center">Belum ada riwayat transfer terkirim.</p>`;
+                return;
+            }
+            
+            // Urutkan transfer berdasarkan tanggal, dari yang terbaru
+            const sorted = [...personalTransfers].sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+
+            // Buat elemen HTML untuk setiap transfer
+            listEl.innerHTML = sorted.map(transfer => {
+                const statusText = transfer.isClaimed ? 'Telah Diklaim' : 'Menunggu Klaim';
+                const statusColor = transfer.isClaimed ? 'text-green-400 bg-green-900/50' : 'text-yellow-400 bg-yellow-900/50';
+                const dateStr = transfer.createdAt?.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) || 'Baru saja';
+                const recipientProfileName = transfer.recipientProfileId === 'personal_profile' ? 'Pribadi' : 'Perusahaan';
+
+                return `
+                <div class="bg-slate-700/50 p-3 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-slate-200">${transfer.description} - ${formatCompactCurrency(transfer.amount)}</p>
+                            <p class="text-xs text-slate-400">Ke: ${recipientProfileName} (${transfer.recipientUserId.substring(0, 10)}...) | ${dateStr}</p>
+                        </div>
+                        <span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${statusText}</span>
+                    </div>
+                    ${transfer.isClaimed ? `<p class="text-xs text-slate-500 mt-1">Diklaim oleh: ${transfer.claimedBy.substring(0, 10)}...</p>` : ''}
+                </div>`;
+            }).join('');
+        }
         
-        // Sistem Level Baru (Peningkatan 26% setiap 10 Level)
         function getXpNeededForLevelUp(level) {
-            // Menentukan blok 10 level (0 untuk level 1-10, 1 untuk 11-20, dst.)
             const tier = Math.floor((level - 1) / 10);
-            // Menghitung biaya XP berdasarkan bloknya, meningkat 26% setiap blok.
             return Math.floor(100 * Math.pow(1.26, tier));
         }
 
@@ -1283,7 +1347,6 @@
             let cardsGained = {};
 
             for (const quest of allQuests) {
-                // PERBAIKAN: Misi login harian tidak dicek di sini lagi.
                 if (quest.type === 'manual' || quest.type === 'no_spend_challenge' || quest.type === 'daily_login') {
                     continue;
                 }
@@ -1341,14 +1404,13 @@
             if (Object.keys(updates).length > 0) await updateDoc(doc(db, `users/${userId}/profile/main`), updates);
         }
         
-        // PERBAIKAN: Fungsi baru yang lebih efisien khusus untuk login harian.
         async function completeDailyLoginQuest() {
             const now = new Date();
             const dateKey = now.toISOString().split('T')[0];
             const questId = 'daily_login';
             const questIdToCheck = `${questId}_${dateKey}`;
             
-            if (userProfile.completedQuests[questIdToCheck]) return; // Sudah selesai hari ini
+            if (userProfile.completedQuests[questIdToCheck]) return;
 
             const quest = allQuests.find(q => q.id === questId);
             if (!quest) return;
@@ -1381,7 +1443,6 @@
             }
         }
 
-        // PERBAIKAN: Fungsi evaluasi misi mingguan dipisahkan dari fungsi penalti.
         async function evaluateWeeklyQuests(weekKey, startOfWeek, endOfWeek, updates) {
             const quest = allQuests.find(q => q.id === 'weekly_no_spend_challenge');
             if (!quest) return;
@@ -1390,7 +1451,7 @@
             if (userProfile.completedQuests[questIdToCheck] || userProfile.failedQuests[questIdToCheck]) return;
 
             const challengeCategoryIds = categories.filter(c => c.isChallenge).map(c => c.id);
-            if (challengeCategoryIds.length === 0) return; // Tidak ada tantangan aktif
+            if (challengeCategoryIds.length === 0) return;
 
             const hasSpentOnChallenge = allTransactions.some(t => {
                 const tDate = new Date(t.date);
@@ -1398,14 +1459,12 @@
             });
 
             if (!hasSpentOnChallenge) {
-                // Misi berhasil diselesaikan
                 updates[`completedQuests.${questIdToCheck}`] = true;
                 updates.xp = increment(quest.xp);
                 showNotificationModal('Misi Tantangan Selesai!', 'military_tech', `Selamat! Anda berhasil menyelesaikan "${quest.text}" dan mendapatkan <strong>+${quest.xp} XP</strong>`, 'green');
             }
         }
         
-        // PERBAIKAN: Fungsi penalti dibuat lebih aman dengan transaksi dan lebih rapi.
         async function checkForMissedQuestsAndApplyPenalties() {
             if (!isInitialLoadComplete || !userProfile.lastPenaltyCheck) {
                 await updateDoc(doc(db, `users/${userId}/profile/main`), { lastPenaltyCheck: serverTimestamp() });
@@ -1421,7 +1480,6 @@
 
             try {
                 await runTransaction(db, async (transaction) => {
-                    // Baca profil terbaru di dalam transaksi untuk menghindari race condition
                     const freshProfileSnap = await transaction.get(profileRef);
                     if (!freshProfileSnap.exists()) throw "Profil tidak ditemukan.";
                     const freshUserProfile = freshProfileSnap.data();
@@ -1432,7 +1490,6 @@
                     
                     const questsToEvaluate = allQuests.filter(q => q.recurring && !q.noPenalty);
 
-                    // Iterasi setiap hari sejak pengecekan terakhir
                     for (let d = new Date(lastCheckDate); d < now; d.setDate(d.getDate() + 1)) {
                         if (d.toDateString() === now.toDateString()) continue;
                         
@@ -1441,9 +1498,7 @@
                         const weekKey = `${year}-W${week}`;
                         const monthKey = `${dayInLoop.getFullYear()}-${dayInLoop.getMonth()}`;
 
-                        // Saat akhir minggu
                         if (dayInLoop.getDay() === 0) {
-                            // PERBAIKAN: Logika evaluasi misi mingguan dipanggil di sini
                             const startOfWeek = new Date(dayInLoop);
                             startOfWeek.setDate(dayInLoop.getDate() - 6);
                             startOfWeek.setHours(0,0,0,0);
@@ -1459,7 +1514,6 @@
                             }
                         }
 
-                        // Saat akhir bulan
                         if (dayInLoop.getDate() === new Date(dayInLoop.getFullYear(), dayInLoop.getMonth() + 1, 0).getDate()) {
                             for (const quest of questsToEvaluate.filter(q => q.category === 'Misi Bulanan')) {
                                 const questIdToCheck = `${quest.id}_${monthKey}`;
@@ -1472,15 +1526,14 @@
                         }
                     }
 
-                    // Hukuman tambahan
                     for (let i = 0; i < failedQuestsCount; i++) {
-                        if (Math.random() < 0.10) { // Peluang 10%
+                        if (Math.random() < 0.10) { 
                             const inventory = freshUserProfile.inventory || {};
                             const availableCards = Object.keys(inventory).filter(k => inventory[k] > 0 && k !== 'exp_boost_x2' && k !== 'penalty_negation');
                             if (inventory.penalty_negation > 0) {
                                 updates['inventory.penalty_negation'] = increment(-1);
                                 showNotificationModal('Hukuman Dibatalkan!', 'shield', 'Kartu Tolak Hukuman telah digunakan untuk membatalkan satu penalti.', 'amber');
-                                totalXpPenalty -= 50; // Kurangi penalti XP jika ada
+                                totalXpPenalty -= 50; 
                                 if (totalXpPenalty < 0) totalXpPenalty = 0;
                                 continue;
                             } else if (availableCards.length > 0) {
@@ -1499,7 +1552,6 @@
                         showNotificationModal('Hukuman!', 'gpp_bad', `Anda kehilangan total <strong>${totalXpPenalty} XP</strong> karena gagal menyelesaikan misi.`, 'red');
                     }
                     
-                    // PERBAIKAN: Timestamp diperbarui di dalam transaksi
                     updates.lastPenaltyCheck = serverTimestamp();
                     if (Object.keys(updates).length > 1) {
                         transaction.update(profileRef, updates);
@@ -1568,7 +1620,6 @@
             }
         }
 
-        // PERBAIKAN: Fungsi pengingat pintar yang baru
         function renderSmartReminders() {
             const transactions = getTransactionsForMonth(currentDate);
             const reminderSection = el('smart-reminder-section');
@@ -1580,7 +1631,7 @@
                     .filter(t => t.category === cat.id && t.type === 'expense')
                     .reduce((s, t) => s + t.amount, 0);
 
-                const categoryType = cat.type || 'bill'; // Default ke 'bill' untuk data lama
+                const categoryType = cat.type || 'bill'; 
 
                 if (categoryType === 'bill' && spent < cat.budget) {
                     unpaidBills.push(cat.name);
@@ -1932,13 +1983,12 @@
             }
         }
 
-        // PERBAIKAN: Handler form kategori disesuaikan untuk menyimpan 'type'
         el('category-form').addEventListener('submit', async (e) => {
             e.preventDefault(); hideError();
             const button = e.target.querySelector('button[type="submit"]');
             const name = el('category-name').value;
             const budget = el('category-budget').value;
-            const type = el('category-type').value; // Ambil tipe kategori
+            const type = el('category-type').value; 
 
             if (!name || !budget || Number(budget) < 0) return showError('Nama kategori dan anggaran positif harus diisi.');
             
@@ -1947,7 +1997,7 @@
                 await addDoc(collection(db, `users/${userId}/categories`), { 
                     name: toTitleCase(name), 
                     budget: Number(budget), 
-                    type: type, // Simpan tipe
+                    type: type, 
                     isArchived: false, 
                     isChallenge: false 
                 });
@@ -2053,6 +2103,38 @@
 
         document.body.addEventListener('click', async (e) => {
             const target = e.target;
+
+            if (target.classList.contains('claim-transfer-btn')) {
+                const button = target;
+                const transferId = button.dataset.transferId;
+                setButtonLoading(button, true); // Langsung nonaktifkan tombol
+                const transferDocRef = doc(db, `artifacts/${firebaseConfig.projectId}/public/data/transfers`, transferId);
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const transferDoc = await transaction.get(transferDocRef);
+                        if (!transferDoc.exists() || transferDoc.data().isClaimed) {
+                            throw new Error("Transfer tidak valid atau sudah diklaim.");
+                        }
+                        const transferData = transferDoc.data();
+                        
+                        const incomeCollectionRef = collection(db, `users/${userId}/transactions`);
+                        transaction.set(doc(incomeCollectionRef), {
+                            description: `Penerimaan Dana: ${transferData.description} (dari ${transferData.senderName || 'Pengirim'})`,
+                            amount: transferData.amount, type: 'income', category: '', date: serverTimestamp()
+                        });
+                        transaction.update(transferDocRef, { isClaimed: true, claimedBy: userId, claimedAt: serverTimestamp() });
+                    });
+                    showNotificationModal('Sukses', 'check_circle', 'Dana berhasil diklaim dan ditambahkan ke pemasukan.', 'green');
+                    closeModal(el('personal-transfer-modal'));
+                } catch (error) {
+                    console.error("Gagal klaim transfer:", error);
+                    showNotificationModal('Gagal', error.message || 'Gagal mengklaim transfer.', 'red');
+                } finally {
+                    // Tombol akan di-enable lagi oleh setButtonLoading jika perlu, atau tetap nonaktif jika modal ditutup
+                }
+                return; // Hentikan eksekusi lebih lanjut
+            }
+
             const actionTarget = target.closest('[data-action]');
             if (target.closest('.quest-category-header')) {
                 const header = target.closest('.quest-category-header');
@@ -2106,6 +2188,34 @@
                 closeModal(cardUseConfirmModal);
             } else if (target.id === 'close-inventory-btn') {
                 closeModal(inventoryModal);
+            } else if (target.classList.contains('claim-transfer-btn')) {
+                const button = target;
+                const transferId = button.dataset.transferId;
+                setButtonLoading(button, true);
+                const transferDocRef = doc(db, `artifacts/${appId}/public/data/transfers`, transferId);
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const transferDoc = await transaction.get(transferDocRef);
+                        if (!transferDoc.exists() || transferDoc.data().isClaimed) throw new Error("Transfer tidak valid atau sudah diklaim.");
+                        const transferData = transferDoc.data();
+                        
+                        const incomeCollectionRef = collection(db, `users/${userId}/transactions`);
+                        transaction.set(doc(incomeCollectionRef), {
+                            description: `Penerimaan Dana: ${transferData.description} (dari ${transferData.senderName || 'Pengirim'})`,
+                            amount: transferData.amount, type: 'income', category: '', date: serverTimestamp()
+                        });
+                        transaction.update(transferDocRef, { isClaimed: true, claimedBy: userId, claimedAt: serverTimestamp() });
+                    });
+                    showNotificationModal('Sukses', 'check_circle', 'Dana berhasil diklaim dan ditambahkan ke pemasukan.', 'green');
+                    closeModal(personalTransferModal);
+                } catch (error) {
+                    console.error("Gagal klaim transfer:", error);
+                    showNotificationModal('Gagal', 'error', error.message || 'Gagal mengklaim transfer.', 'red');
+                } finally {
+                    setButtonLoading(button, false);
+                }
+            } else if (target.id === 'close-transfer-modal-btn') {
+                closeModal(personalTransferModal);
             } else if (actionTarget) {
                 const action = actionTarget.dataset.action;
                 const id = actionTarget.dataset.id;
@@ -2239,7 +2349,6 @@
                     const item = docSnap.data();
 
                     if (isCat) {
-                        // PERBAIKAN: Modal edit kategori ditambahkan pilihan Tipe Anggaran
                         modal.innerHTML = `
                             <form id="edit-form" class="space-y-4">
                                 <h3 class="text-xl font-bold mb-4">Edit Kategori${isIncome ? ' Pemasukan' : ''}</h3>
@@ -2259,9 +2368,9 @@
                                 <div class="mt-6 flex justify-end gap-3"><button type="button" class="btn-cancel-modal btn bg-slate-600">Batal</button><button type="submit" class="btn btn-primary">Perbarui</button></div>
                             </form>`;
                         if (!isIncome) {
-                            modal.querySelector('#edit-cat-type').value = item.type || 'bill'; // Set nilai default
+                            modal.querySelector('#edit-cat-type').value = item.type || 'bill'; 
                         }
-                    } else { // Edit transaction
+                    } else { 
                         modal.innerHTML = `
                             <form id="edit-form">
                                 <h3 class="text-xl font-bold mb-4">Edit Transaksi</h3>
@@ -2371,13 +2480,11 @@
                         }
                         
                         for (const cardIdAward in cardsToAward) {
-                            // Variabel sudah diperbaiki
                             updates[`inventory.${cardIdAward}`] = increment(cardsToAward[cardIdAward]);
                         }
 
                         try {
                             await updateDoc(doc(db, `users/${userId}/profile/main`), updates);
-                            // Sekarang notifikasi ini akan muncul dengan benar
                             showNotificationModal('Misi Selesai!', 'military_tech', `Anda menyelesaikan "${quest.text}" dan mendapatkan <strong>+${xpGained} XP</strong>`, 'green');
                         } catch (error) {
                             console.error("Error completing manual quest:", error);
@@ -2531,7 +2638,6 @@
                 ]);
                 allTransactions = transactionsSnap.docs.map(d => {
                     const data = d.data();
-                    // Konversi Firestore Timestamp ke Javascript Date object di sini
                     const date = data.date && data.date.toDate ? data.date.toDate() : new Date();
                     return { id: d.id, ...data, date: date };
                 });
@@ -2547,10 +2653,9 @@
                 console.log("Initial data loaded. Rendering UI.");
                 
                 await checkAndAssignQuestRewards();
-                // PERBAIKAN: Fungsi penalti dan evaluasi dipanggil saat inisialisasi
                 await checkForMissedQuestsAndApplyPenalties();
                 await checkMissedLastMonthQuests(); 
-                await completeDailyLoginQuest(); // Fungsi login harian yang efisien dipanggil
+                await completeDailyLoginQuest(); 
                 
                 renderAll();
                 setupRealtimeListeners();
@@ -2561,7 +2666,7 @@
             if (!userId) return;
             console.log("Setting up real-time listeners.");
             
-            const profileListener = onSnapshot(doc(db, `users/${userId}/profile/main`), (snap) => {
+            listeners.push(onSnapshot(doc(db, `users/${userId}/profile/main`), (snap) => {
                 if (snap.exists()) {
                     userProfile = snap.data();
                     if(isInitialLoadComplete) { 
@@ -2572,12 +2677,11 @@
                         }
                     }
                 }
-            });
+            }));
 
-            const transactionListener = onSnapshot(collection(db, `users/${userId}/transactions`), (snap) => {
+            listeners.push(onSnapshot(collection(db, `users/${userId}/transactions`), (snap) => {
                 allTransactions = snap.docs.map(d => {
                     const data = d.data();
-                    // Konversi Firestore Timestamp ke Javascript Date object di sini juga
                     const date = data.date && data.date.toDate ? data.date.toDate() : new Date();
                     return { id: d.id, ...data, date: date };
                 });
@@ -2585,46 +2689,57 @@
                     renderAll();
                     checkAndCompleteQuests();
                 }
-            });
+            }));
 
-            const categoryListener = onSnapshot(collection(db, `users/${userId}/categories`), (snap) => {
+            listeners.push(onSnapshot(collection(db, `users/${userId}/categories`), (snap) => {
                 categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(isInitialLoadComplete) {
                     buildCategoryMap();
                     renderAll(); 
                 }
-            });
+            }));
 
-            const incomeCategoryListener = onSnapshot(collection(db, `users/${userId}/income_categories`), (snap) => {
+            listeners.push(onSnapshot(collection(db, `users/${userId}/income_categories`), (snap) => {
                 incomeCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(isInitialLoadComplete) {
                     buildCategoryMap();
                     renderAll();
                 }
-            });
+            }));
 
-            const goalsListener = onSnapshot(collection(db, `users/${userId}/goals`), (snap) => {
+            listeners.push(onSnapshot(collection(db, `users/${userId}/goals`), (snap) => {
                 financialGoals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(isInitialLoadComplete) renderGoals();
-            });
-            const debtsListener = onSnapshot(collection(db, `users/${userId}/debts`), (snap) => {
+            }));
+            listeners.push(onSnapshot(collection(db, `users/${userId}/debts`), (snap) => {
                 debts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(isInitialLoadComplete) renderDebts();
-            });
-            const investmentsListener = onSnapshot(collection(db, `users/${userId}/investments`), (snap) => {
+            }));
+            listeners.push(onSnapshot(collection(db, `users/${userId}/investments`), (snap) => {
                 investments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if(isInitialLoadComplete) {
                     renderInvestments();
                     renderDashboard();
                 }
-            });
+            }));
+            
+            const transferQueryPath = `artifacts/${appId}/public/data/transfers`;
+            listeners.push(onSnapshot(query(collection(db, transferQueryPath), where("senderUserId", "==", userId), where("senderProfileId", "==", PERSONAL_PROFILE_ID)), (snap) => {
+                personalTransfers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (isInitialLoadComplete) renderPersonalTransfers();
+            }));
 
-            listeners.push(profileListener, transactionListener, categoryListener, incomeCategoryListener, goalsListener, debtsListener, investmentsListener);
+            listeners.push(onSnapshot(query(collection(db, transferQueryPath), where("recipientUserId", "==", userId), where("recipientProfileId", "==", PERSONAL_PROFILE_ID), where("isClaimed", "==", false)), (snapshot) => {
+                if (isInitialLoadComplete && snapshot.docs.length > 0) {
+                    const incoming = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    showIncomingTransferModal(incoming);
+                }
+            }));
         }
 
         function clearDataAndUI() {
             allTransactions = []; categories = []; incomeCategories = [];
-            financialGoals = []; debts = []; investments = [];
+            financialGoals = []; debts = []; investments = []; personalTransfers = [];
             categoryMap = {};
             userProfile = { level: 1, xp: 0, completedQuests: {}, failedQuests: {}, inventory: {}, activeBoosts: {}, lastPenaltyCheck: null, hasReadGuide: false, hasReadDashboardGuide: false, questRewards: {} };
             listeners.forEach(unsub => unsub());
@@ -2646,7 +2761,32 @@
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        userProfileDisplay.innerHTML = `<img src="${user.photoURL || 'https://placehold.co/40x40/334155/F8FAFC?text=?'}" alt="Foto Profil Pengguna" class="w-10 h-10 rounded-full"><span class="font-semibold">${user.displayName || 'Pengguna'}</span>`;
+                        // Kode Baru (Pengganti)
+                        userProfileDisplay.innerHTML = `
+                            <img src="${user.photoURL || 'https://placehold.co/40x40/334155/F8FAFC?text=?'}" alt="Foto Profil Pengguna" class="w-10 h-10 rounded-full">
+                            <div>
+                                <span class="font-semibold">${user.displayName || 'Pengguna'}</span>
+                                <div class="flex items-center gap-1 text-xs text-slate-400">
+                                    <span>ID: ${userId.substring(0,12)}...</span>
+                                    <span id="copy-user-id-btn" class="material-symbols-outlined !text-base cursor-pointer hover:text-white" title="Salin User ID">content_copy</span>
+                                </div>
+                            </div>
+                        `;
+
+                        // Tambahkan event listener untuk tombol salin yang baru dibuat
+                        el('copy-user-id-btn').addEventListener('click', (e) => {
+                            navigator.clipboard.writeText(userId).then(() => {
+                                const icon = e.target;
+                                icon.textContent = 'check'; // Ganti ikon menjadi centang
+                                icon.classList.add('text-green-400'); // Beri warna hijau
+
+                                // Kembalikan ikon ke semula setelah 2 detik
+                                setTimeout(() => {
+                                    icon.textContent = 'content_copy';
+                                    icon.classList.remove('text-green-400');
+                                }, 2000);
+                            });
+                        });
                         loginScreen.style.display = 'none';
                         appContent.style.display = 'block';
                         setTimeout(async () => {
@@ -3132,6 +3272,59 @@
             finally { setButtonLoading(button, false); }
         });
 
+        el('personal-transfer-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); hideError();
+            const button = e.target.querySelector('button[type="submit"]');
+            const recipientUserId = el('recipient-user-id').value.trim();
+            const recipientProfileId = el('recipient-profile-id').value;
+            const amount = Number(el('personal-transfer-amount').value);
+            const description = el('personal-transfer-desc').value;
+
+            if (!recipientUserId || !recipientProfileId || !amount || amount <= 0 || !description) {
+                return showNotificationModal('Gagal', 'error', 'Semua field transfer harus diisi dengan benar.', 'red');
+            }
+
+            if (recipientProfileId === PERSONAL_PROFILE_ID) {
+                showNotificationModal('Transfer Gagal', 'block', 'Anda tidak dapat mengirim dana ke profil pribadi Anda sendiri.', 'red');
+                return;
+            }
+            setButtonLoading(button, true);
+
+            try {
+                const transferRef = collection(db, `artifacts/${appId}/public/data/transfers`);
+                await addDoc(transferRef, {
+                    senderUserId: userId,
+                    senderProfileId: PERSONAL_PROFILE_ID, // Gunakan konstanta profil personal
+                    senderName: auth.currentUser.displayName || 'Pengguna Budget Quest',
+                    recipientUserId: recipientUserId,
+                    recipientProfileId: recipientProfileId,
+                    amount: amount,
+                    description: description,
+                    createdAt: serverTimestamp(),
+                    isClaimed: false,
+                    claimedBy: null,
+                    claimedAt: null
+                });
+
+                // Catat sebagai pengeluaran di akun personal
+                await addDoc(collection(db, `users/${userId}/transactions`), {
+                    description: `Transfer Dana: ${description}`,
+                    amount: amount,
+                    type: 'expense',
+                    category: '', // Atau bisa buat kategori khusus 'Transfer Keluar'
+                    date: serverTimestamp()
+                });
+
+                showNotificationModal('Sukses', 'check_circle', 'Transfer berhasil dikirim dan dicatat sebagai pengeluaran.', 'green');
+                el('personal-transfer-form').reset();
+            } catch (err) {
+                console.error("Gagal mengirim transfer:", err);
+                showNotificationModal('Error Server', 'gpp_bad', 'Gagal mengirim transfer. Coba lagi nanti.', 'red');
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+
         // --- TAMBAHKAN FUNGSI BARU INI ---
         function formatCompactCurrency(value) {
             if (value === null || value === undefined) return 'Rp 0';
@@ -3163,6 +3356,27 @@
             }).format(a);
         
             return `Rp ${formattedA}${b}`;
+        }
+
+        function showIncomingTransferModal(transfers) {
+            const modal = el('personal-transfer-modal');
+            let html = `<h3 class="font-bold text-lg mb-4 text-blue-400">Anda Menerima Transfer Dana!</h3>`;
+            transfers.forEach(t => {
+                html += `
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded-md mb-2 flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-slate-200">${t.description}</p>
+                        <p class="text-xl font-bold text-green-500">${formatCurrency(t.amount)}</p>
+                        <p class="text-xs text-slate-400">Dari: <strong>${t.senderName || 'Pengirim'}</strong></p>
+                    </div>
+                    <button data-transfer-id="${t.id}" class="claim-transfer-btn btn btn-success !py-2 !px-4">Klaim</button>
+                </div>`;
+            });
+            html += `<div class="flex justify-end mt-4"><button id="close-transfer-modal-btn" class="btn btn-secondary">Tutup</button></div>`;
+            modal.innerHTML = html;
+            openModal(modal);
+
+            modal.querySelector('#close-transfer-modal-btn').addEventListener('click', () => closeModal(modal));
         }
     </script>
 </body>
