@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajer Anggaran Perusahaan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F1F5F9;
+      color: #0F172A;
+    }
+
+    .input-field {
+      width: 100%;
+      background-color: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #2563EB;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+    }
+
+    .input-field::placeholder {
+      color: #64748B;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-primary { background-color: #1E40AF; color: white; }
+    .btn-primary:hover:not(:disabled) { background-color: #1E3A8A; }
+    .btn-secondary { background-color: #475569; color: white; }
+    .btn-secondary:hover:not(:disabled) { background-color: #334155; }
+    .btn-success { background-color: #16A34A; color: white; }
+    .btn-success:hover:not(:disabled) { background-color: #15803D; }
+    .btn-danger { background-color: #DC2626; color: white; }
+    .btn-danger:hover:not(:disabled) { background-color: #B91C1C; }
+    .btn-google { background-color: #FFFFFF; color: #1F2937; border: 1px solid #D1D5DB; }
+    .btn-google:hover { background-color: #F9FAFB; }
+    .btn-icon {
+        background-color: #E2E8F0;
+        color: #475569;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+    }
+    .btn-icon:hover { background-color: #CBD5E1; }
+
+
+    .icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    #loading-spinner,
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: #F1F5F9;
+      z-index: 9999;
+    }
+
+    .chart-container { height: 300px; }
+    .action-icon { cursor: pointer; color: #64748B; transition: color 0.2s; font-size: 22px; }
+    .action-icon:hover { color: #0F172A; }
+    .card {
+      background-color: #FFFFFF;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-radius: 50%;
+      border-top-color: #1E40AF;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    .info-modal-content {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+    .info-modal-content h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1E40AF;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .info-modal-content p, .info-modal-content li { color: #334155; }
+    .info-modal-content ul { list-style-position: inside; padding-left: 0.5rem; }
+    .info-modal-content strong { color: #1E293B; }
+    
+    .custom-checkbox {
+        height: 1.25rem;
+        width: 1.25rem;
+        border-radius: 0.25rem;
+        border-color: #CBD5E1;
+        color: #2563EB;
+        transition: all 0.2s;
+    }
+    .custom-checkbox:focus {
+        ring: 2px;
+        ring-color: #2563EB;
+        ring-offset: 2px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body class="p-4 sm:p-6 lg:p-8">
+
+  <div id="loading-spinner">
+    <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-800"></div>
+  </div>
+
+  <div id="login-screen" style="display: none;">
+    <div class="text-center max-w-sm mx-auto">
+      <h1 class="text-4xl font-extrabold text-blue-800 tracking-tight flex items-center justify-center gap-3">
+        <span class="material-symbols-outlined text-5xl">corporate_fare</span> Manajer Keuangan
+      </h1>
+      <p class="text-slate-600 mt-2 mb-8">Login untuk mengelola keuangan perusahaan.</p>
+      <button id="google-signin-btn" class="btn btn-google w-full">
+        <svg class="w-5 h-5 mr-2" role="img" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+          <g>
+            <path fill="#EA4335"
+              d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
+            </path>
+            <path fill="#4285F4"
+              d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z">
+            </path>
+            <path fill="#FBBC05"
+              d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z">
+            </path>
+            <path fill="#34A853"
+              d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
+            </path>
+            <path fill="none" d="M0 0h48v48H0z"></path>
+          </g>
+        </svg>
+        Masuk dengan Akun Google
+      </button>
+    </div>
+  </div>
+
+  <main id="app-content" class="max-w-7xl mx-auto" style="display: none;">
+    <header class="mb-8 flex flex-wrap justify-between items-center gap-4">
+      <div id="user-profile-display" class="flex items-center gap-3">
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="signout-btn" class="btn bg-red-600 hover:bg-red-700 text-sm p-2 sm:py-2 sm:px-4">
+          <span class="material-symbols-outlined icon">logout</span>
+          <span class="hidden sm:inline">Keluar</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="error-display" class="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-center hidden"></div>
+
+    <div class="mb-8">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
+        <div class="flex items-center gap-3">
+            <h2 class="text-3xl font-bold text-slate-800">Dasbor Keuangan</h2>
+            <button id="app-guide-btn" class="text-slate-500 hover:text-blue-700 transition-colors" aria-label="Buka Panduan Aplikasi">
+                <span class="material-symbols-outlined">help_outline</span>
+            </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="today-btn" class="p-2 bg-white rounded-md hover:bg-slate-50 transition-colors border border-slate-300" aria-label="Pindah ke Bulan Ini"><span class="material-symbols-outlined">today</span></button>
+          <button id="prev-month-btn" class="p-2 bg-white rounded-md hover:bg-slate-50 transition-colors border border-slate-300" aria-label="Bulan Sebelumnya"><span class="material-symbols-outlined">chevron_left</span></button>
+          <span id="current-month-display" class="font-semibold text-lg w-40 text-center"></span>
+          <button id="next-month-btn" class="p-2 bg-white rounded-md hover:bg-slate-50 transition-colors border border-slate-300" aria-label="Bulan Berikutnya"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card"><h3 class="text-sm font-medium text-slate-500 mb-1">Pemasukan Bulan Ini</h3><p id="total-income" class="text-3xl font-bold text-green-600">Rp 0</p></div>
+        <div class="card"><h3 class="text-sm font-medium text-slate-500 mb-1">Pengeluaran Bulan Ini</h3><p id="total-expenses" class="text-3xl font-bold text-red-600">Rp 0</p></div>
+        <div class="card"><h3 class="text-sm font-medium text-slate-500 mb-1">Arus Kas Bersih</h3><p id="balance" class="text-3xl font-bold text-blue-700">Rp 0</p></div>
+        <div class="card"><h3 class="text-sm font-medium text-slate-500 mb-1">Total Kas Tersedia</h3><p id="total-cash-balance" class="text-3xl font-bold text-indigo-700">Rp 0</p></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div class="card"><h3 class="text-lg font-semibold text-slate-800 mb-4">Pemasukan vs Pengeluaran</h3><div class="chart-container"><canvas id="incomeExpenseChart"></canvas></div></div>
+      <div class="card"><h3 class="text-lg font-semibold text-slate-800 mb-4">Distribusi Pengeluaran per Kategori</h3><div class="chart-container"><canvas id="categoryPieChart"></canvas></div></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div class="lg:col-span-3 space-y-8">
+        <section id="transaction-section" class="card">
+          <h2 class="text-2xl font-bold mb-4 text-slate-800">Manajemen Transaksi</h2>
+          <form id="transaction-form" class="space-y-4 mb-6">
+            <h3 class="font-semibold text-slate-700">Tambah Transaksi Baru</h3>
+            <input type="text" id="transaction-description" placeholder="Deskripsi" class="input-field" required>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <input type="number" id="transaction-amount" placeholder="Jumlah" class="input-field" min="0" required>
+              <select id="transaction-type" class="input-field"><option value="expense">Pengeluaran</option><option value="income">Pemasukan</option></select>
+              <select id="transaction-category" class="input-field"><option value="">Pilih Kategori...</option></select>
+            </div>
+            <button type="submit" class="btn btn-secondary w-full"><span class="material-symbols-outlined icon">add_circle</span> Tambah Transaksi</button>
+          </form>
+          <hr class="my-6">
+          
+          <div>
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-3">
+              <h3 class="font-semibold text-slate-700">Riwayat Transaksi</h3>
+              <div id="transaction-actions">
+                <button id="delete-selected-btn" class="btn btn-danger text-sm !py-1 !px-3" disabled>
+                  <span class="material-symbols-outlined icon !text-base align-middle">delete</span>
+                  <span class="align-middle">Hapus</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="flex gap-2 mb-4">
+                <div class="relative flex-grow">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="transaction-search" placeholder="Cari deskripsi, jumlah, atau tanggal..." class="input-field pl-10">
+                </div>
+                <button id="sort-btn" class="btn-icon" aria-label="Urutkan Transaksi">
+                    <span class="material-symbols-outlined icon">swap_vert</span>
+                </button>
+                <button id="filter-btn" class="btn-icon" aria-label="Filter Transaksi">
+                    <span class="material-symbols-outlined icon">filter_list</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 mb-4 p-2 bg-slate-100 rounded-md">
+              <input type="checkbox" id="select-all-transactions" class="custom-checkbox cursor-pointer">
+              <label for="select-all-transactions" class="text-slate-700 font-medium">Pilih Semua</label>
+            </div>
+
+            <div id="transaction-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+          </div>
+
+        </section>
+        <section id="transfer-section" class="card">
+          <h2 class="text-2xl font-bold mb-4 text-blue-800">Transfer Dana</h2>
+          <form id="transfer-form" class="space-y-4 mb-6">
+            <h3 class="font-semibold text-slate-700">Kirim Dana ke Pengguna</h3>
+            <div><label for="transfer-recipient-user-id" class="block text-sm font-medium text-slate-600 mb-1">User ID Akun Google Penerima</label><input type="text" id="transfer-recipient-user-id" placeholder="Salin User ID dari aplikasi tujuan" class="input-field" required></div>
+            <div>
+              <label for="transfer-recipient-profile-id" class="block text-sm font-medium text-slate-600 mb-1">ID Profil Tujuan</label>
+              <select id="transfer-recipient-profile-id" class="input-field" required>
+                <option value="" disabled selected>Pilih Tipe Profil Tujuan...</option>
+                <option value="personal_profile">Profil Pribadi</option>
+                <option value="corporate_profile">Profil Perusahaan</option>
+              </select>
+            </div>
+            <div><label for="transfer-amount" class="block text-sm font-medium text-slate-600 mb-1">Jumlah Transfer</label><input type="number" id="transfer-amount" placeholder="Jumlah" class="input-field" min="1" required></div>
+            <div><label for="transfer-description" class="block text-sm font-medium text-slate-600 mb-1">Deskripsi</label><input type="text" id="transfer-description" placeholder="Deskripsi (misal: Gaji, Reimbursement)" class="input-field" required></div>
+            <button type="submit" class="btn btn-primary w-full"><span class="material-symbols-outlined icon">send</span> Kirim Transfer</button>
+          </form>
+          <hr class="my-6">
+          <div><h3 class="font-semibold text-slate-700 mb-4">Riwayat Transfer Terkirim</h3><div id="transfer-history-list" class="space-y-3 max-h-60 overflow-y-auto pr-2"><p class="text-slate-500 text-center">Belum ada riwayat transfer.</p></div></div>
+        </section>
+      </div>
+      <aside class="lg:col-span-2 space-y-8">
+        <section id="category-expense-section" class="card">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">Anggaran Kategori</h2>
+                <button id="archive-selected-expense-btn" class="btn btn-danger text-sm !py-1 !px-3" disabled>
+                    <span class="material-symbols-outlined icon !text-base align-middle">archive</span>
+                    <span class="align-middle">Arsipkan</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+                <input type="checkbox" id="select-all-expense-categories" class="custom-checkbox cursor-pointer">
+                <label for="select-all-expense-categories" class="text-slate-700">Pilih Semua</label>
+            </div>
+            <form id="category-expense-form" class="space-y-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="text" id="category-expense-name" placeholder="Nama Kategori" class="input-field" required>
+                    <input type="number" id="category-expense-budget" placeholder="Anggaran Bulanan" class="input-field" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full"><span class="material-symbols-outlined icon">add_circle</span> Tambah Kategori</button>
+            </form>
+            <div class="mb-4">
+                <input type="text" id="category-expense-search" placeholder="Cari kategori..." class="input-field">
+            </div>
+            <div id="category-expense-list" class="space-y-4"></div>
+        </section>
+        
+        <section id="category-income-section" class="card">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">Kategori Pemasukan</h2>
+                <button id="archive-selected-income-btn" class="btn btn-danger text-sm !py-1 !px-3" disabled>
+                    <span class="material-symbols-outlined icon !text-base align-middle">archive</span>
+                    <span class="align-middle">Arsipkan</span>
+                </button>
+            </div>
+             <div class="flex items-center gap-3 mb-4">
+                <input type="checkbox" id="select-all-income-categories" class="custom-checkbox cursor-pointer">
+                <label for="select-all-income-categories" class="text-slate-700">Pilih Semua</label>
+            </div>
+            <form id="category-income-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <input type="text" id="category-income-name" placeholder="Nama Kategori Pemasukan" class="input-field sm:col-span-2" required>
+                <button type="submit" class="btn btn-primary sm:col-span-1"><span class="material-symbols-outlined icon">add_circle</span> Tambah</button>
+            </form>
+            <div class="mb-4">
+                <input type="text" id="category-income-search" placeholder="Cari kategori..." class="input-field">
+            </div>
+            <div id="category-income-list" class="space-y-2"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="text-2xl font-bold mb-4 text-slate-800">Ekspor Laporan</h2>
+          <div class="flex justify-center"><button id="export-btn" class="btn btn-primary w-full"><span class="material-symbols-outlined icon">download</span> Ekspor Laporan Bulan Ini (.xlsx)</button></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/60 z-40"></div>
+  <div id="transfer-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
+  <div id="edit-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
+  <div id="confirm-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
+  <div id="notification-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50 text-center"></div>
+  
+  <div id="filter-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50">
+    <h3 class="text-xl font-bold mb-4">Filter Transaksi</h3>
+    <form id="filter-form" class="space-y-4">
+        <div>
+            <label for="filter-type" class="block text-sm font-medium text-slate-700">Tipe Transaksi</label>
+            <select id="filter-type" class="input-field mt-1">
+                <option value="all">Semua Tipe</option>
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
+            </select>
+        </div>
+        <div>
+            <label for="filter-category" class="block text-sm font-medium text-slate-700">Kategori</label>
+            <select id="filter-category" class="input-field mt-1">
+                <option value="all">Semua Kategori</option>
+            </select>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button" id="filter-reset-btn" class="btn btn-secondary">Reset</button>
+            <button type="submit" class="btn btn-primary">Terapkan</button>
+        </div>
+    </form>
+  </div>
+
+  <div id="app-guide-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-2xl shadow-lg w-11/12 max-w-2xl z-50">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-blue-800">Panduan Manajer Keuangan</h2>
+        <button id="close-app-guide-btn" class="text-slate-500 hover:text-slate-800 text-3xl leading-none">&times;</button>
+    </div>
+    <div class="info-modal-content">
+        <h3>Selamat Datang!</h3>
+        <p>Aplikasi ini dirancang untuk membantu Anda mengelola dan memantau keuangan perusahaan dengan efisien.</p>
+
+        <h3>Dasbor Utama</h3>
+        <p>Di halaman utama, Anda akan melihat ringkasan keuangan untuk bulan berjalan:</p>
+        <ul>
+            <li><strong>Pemasukan Bulan Ini:</strong> Total semua dana yang masuk.</li>
+            <li><strong>Pengeluaran Bulan Ini:</strong> Total semua dana yang keluar.</li>
+            <li><strong>Arus Kas Bersih:</strong> Selisih antara pemasukan dan pengeluaran.</li>
+            <li><strong>Total Kas Tersedia:</strong> Akumulasi saldo kas perusahaan dari waktu ke waktu.</li>
+        </ul>
+
+        <h3>Fitur Utama</h3>
+        <ul>
+            <li><strong>Transfer Dana:</strong> Kirim dana ke akun lain, baik itu akun pribadi (misal: untuk gaji atau reimbursement) atau akun perusahaan lain. Pastikan Anda memasukkan <strong>User ID</strong> dan memilih <strong>Tipe Profil Tujuan</strong> yang benar.</li>
+            <li><strong>Manajemen Transaksi:</strong> Catat setiap pemasukan dan pengeluaran perusahaan untuk menjaga data tetap akurat.</li>
+            <li><strong>Anggaran Kategori:</strong> Buat pos-pos anggaran (misal: "Biaya Operasional", "Pemasaran") untuk melacak pengeluaran berdasarkan kategori dan membandingkannya dengan budget yang telah ditetapkan.</li>
+            <li><strong>Ekspor Laporan:</strong> Unduh laporan keuangan bulanan dalam format Excel (.xlsx) untuk keperluan analisis atau pelaporan lebih lanjut.</li>
+        </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import necessary functions from Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, query, setDoc, updateDoc, writeBatch, getDocs, where, serverTimestamp, getDoc, runTransaction, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Firebase Configuration ---
+    // This object contains your Firebase project's credentials.
+    const firebaseConfig = {
+      apiKey: "AIzaSyAB92PN-HqtddGUmuV8Z7oRQKB88Wutz9I",
+      authDomain: "penganggaran-10d4e.firebaseapp.com",
+      projectId: "penganggaran-10d4e",
+      storageBucket: "penganggaran-10d4e.appspot.com",
+      messagingSenderId: "991890030945",
+      appId: "1:991890030945:web:8707184aaf989f597a0520"
+    };
+
+    // --- Global Variables & Constants ---
+    const PROFILE_ID = "corporate_profile";
+    const PROFILE_NAME = "Profil Perusahaan";
+    const PROFILE_TYPE = "perusahaan";
+
+    let db, auth, userId, app;
+    let appId = firebaseConfig.projectId; // Use projectId from config
+    let allTransactions = [], expenseCategories = [], incomeCategories = [], transfers = [];
+    let expenseCategoryMap = {}, incomeCategoryMap = {};
+    let listeners = []; // To store unsubscribe functions for realtime listeners
+    let incomeExpenseChart, categoryPieChart;
+    let currentDate = new Date();
+    let isInitialLoadComplete = false;
+    let selectedTransactions = new Set();
+    let selectedExpenseCategories = new Set();
+    let selectedIncomeCategories = new Set();
+    let sortOrder = 'desc'; // 'asc' or 'desc' for transaction sorting
+    let activeFilters = { type: 'all', category: 'all' };
+
+    // --- DOM Element Shortcuts ---
+    const el = (id) => document.getElementById(id);
+    const loadingSpinner = el('loading-spinner');
+    const loginScreen = el('login-screen');
+    const appContent = el('app-content');
+    const errorDisplay = el('error-display');
+    const googleSignInBtn = el('google-signin-btn');
+    const signOutBtn = el('signout-btn');
+    const userProfileDisplay = el('user-profile-display');
+    const modalBackdrop = el('modal-backdrop');
+    const appGuideBtn = el('app-guide-btn');
+    const appGuideModal = el('app-guide-modal');
+    const closeAppGuideBtn = el('close-app-guide-btn');
+
+    // --- Utility Functions ---
+    const toTitleCase = (str) => !str ? '' : str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+    const showError = (message) => { errorDisplay.textContent = message; errorDisplay.classList.remove('hidden'); };
+    const hideError = () => errorDisplay.classList.add('hidden');
+    function formatCompactCurrency(value) {
+        if (value === null || value === undefined) return 'Rp 0';
+        
+        const absValue = Math.abs(value);
+        let a, b;
+    
+        if (absValue >= 1e12) {
+            a = value / 1e12;
+            b = ' T'; // Triliun
+        } else if (absValue >= 1e9) {
+            a = value / 1e9;
+            b = ' M'; // Miliar
+        } else if (absValue >= 1e6) {
+            a = value / 1e6;
+            b = ' Jt'; // Juta
+        } else if (absValue >= 1e3) {
+            a = value / 1e3;
+            b = ' Rb'; // Ribu
+        } else {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+        }
+    
+        const formattedA = new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 1
+        }).format(a);
+    
+        return `Rp ${formattedA}${b}`;
+    }
+
+    // --- Modal Management ---
+    function openModal(modal, focusSelector = 'input, select, button') {
+        modal.classList.remove('hidden');
+        modalBackdrop.classList.remove('hidden');
+        const focusableElement = modal.querySelector(focusSelector);
+        if (focusableElement) setTimeout(() => focusableElement.focus(), 50);
+    }
+
+    function closeModal(modalElement) {
+        if (modalElement) modalElement.classList.add('hidden');
+        const anyModalVisible = document.querySelector('.fixed.z-50:not(.hidden)');
+        if (!anyModalVisible) modalBackdrop.classList.add('hidden');
+    }
+
+    // --- Application Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            loadingSpinner.style.display = 'flex';
+            appContent.style.display = 'none';
+            loginScreen.style.display = 'none';
+            
+            if (user) {
+                userId = user.uid;
+                await ensureProfileExists();
+                updateHeaderUI(user);
+                await initializeAndLoadData();
+                loginScreen.style.display = 'none';
+                appContent.style.display = 'block';
+            } else {
+                userId = null;
+                clearDataAndUI();
+                loginScreen.style.display = 'flex';
+            }
+            loadingSpinner.style.display = 'none';
+        });
+      } catch(e) {
+        console.error("Firebase Init Error:", e);
+        loadingSpinner.style.display = 'none';
+        showError("Gagal menginisialisasi aplikasi. Cek konsol untuk detail.");
+      }
+    });
+
+    // --- Core Data & Profile Logic ---
+    async function ensureProfileExists() {
+        const profileRef = doc(db, `users/${userId}/wallets/${PROFILE_ID}`);
+        const profileSnap = await getDoc(profileRef);
+        if (!profileSnap.exists()) {
+            try {
+                await setDoc(profileRef, {
+                    name: PROFILE_NAME,
+                    type: PROFILE_TYPE,
+                    createdAt: serverTimestamp(),
+                    balance: 0
+                });
+                console.log(`Profil '${PROFILE_NAME}' berhasil dibuat.`);
+            } catch (error) {
+                console.error("Gagal membuat profil:", error);
+                showError("Gagal menginisialisasi profil Anda.");
+            }
+        }
+    }
+    
+    function updateHeaderUI(user) {
+        if (!user) return;
+        const initial = (user.displayName || 'A').charAt(0).toUpperCase();
+        const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500'];
+        const colorClass = colors[initial.charCodeAt(0) % colors.length];
+
+        userProfileDisplay.innerHTML = `
+            <div class="w-10 h-10 ${colorClass} rounded-full flex items-center justify-center text-white font-bold text-xl">
+                ${initial}
+            </div>
+            <div>
+                <span class="font-semibold">${user.displayName || 'Pengguna'}</span>
+                <div class="flex items-center gap-1 text-xs text-slate-500">
+                    <span>ID: ${userId.substring(0,12)}...</span>
+                    <span id="copy-user-id-btn" class="material-symbols-outlined !text-base cursor-pointer hover:text-blue-700" title="Salin User ID">content_copy</span>
+                </div>
+            </div>
+        `;
+
+        el('copy-user-id-btn').addEventListener('click', (e) => {
+            navigator.clipboard.writeText(userId).then(() => {
+                const icon = e.target;
+                icon.textContent = 'check';
+                icon.classList.add('text-green-600');
+                setTimeout(() => {
+                    icon.textContent = 'content_copy';
+                    icon.classList.remove('text-green-600');
+                }, 2000);
+            });
+        });
+    }
+
+    async function initializeAndLoadData() {
+        console.log(`Memuat data untuk profil: ${PROFILE_ID}`);
+        isInitialLoadComplete = false;
+        listeners.forEach(unsub => unsub());
+        listeners = [];
+        setupRealtimeListeners();
+    }
+
+    function setupRealtimeListeners() {
+        if (!userId) return;
+        const pathPrefix = `users/${userId}/wallets/${PROFILE_ID}`;
+
+        const handleInitialLoad = () => {
+            if (!isInitialLoadComplete) {
+                isInitialLoadComplete = true;
+                console.log("Initial data loaded, rendering UI.");
+                renderAll();
+            }
+        };
+
+        let loadedFlags = { transactions: false, expenseCategories: false, incomeCategories: false, transfers: false };
+        const checkAllLoaded = () => {
+            if(Object.values(loadedFlags).every(Boolean)) {
+                handleInitialLoad();
+            }
+        }
+
+        listeners.push(onSnapshot(collection(db, `${pathPrefix}/transactions`), (snap) => {
+            allTransactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (isInitialLoadComplete) renderAll();
+            loadedFlags.transactions = true; checkAllLoaded();
+        }, err => console.error("Listener transaksi gagal:", err)));
+
+        listeners.push(onSnapshot(collection(db, `${pathPrefix}/expense_categories`), (snap) => {
+            expenseCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            buildCategoryMaps();
+            if (isInitialLoadComplete) renderAll();
+            loadedFlags.expenseCategories = true; checkAllLoaded();
+        }, err => console.error("Listener kategori pengeluaran gagal:", err)));
+
+        listeners.push(onSnapshot(collection(db, `${pathPrefix}/income_categories`), (snap) => {
+            incomeCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            buildCategoryMaps();
+            if (isInitialLoadComplete) renderAll();
+            loadedFlags.incomeCategories = true; checkAllLoaded();
+        }, err => console.error("Listener kategori pemasukan gagal:", err)));
+
+        const transferQueryPath = `artifacts/${appId}/public/data/transfers`;
+        listeners.push(onSnapshot(query(collection(db, transferQueryPath), where("senderUserId", "==", userId), where("senderProfileId", "==", PROFILE_ID)), (snap) => {
+            transfers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (isInitialLoadComplete) renderTransfers();
+            loadedFlags.transfers = true; checkAllLoaded();
+        }, err => console.error("Listener transfer keluar gagal:", err)));
+
+        listeners.push(onSnapshot(query(collection(db, transferQueryPath), where("recipientUserId", "==", userId), where("recipientProfileId", "==", PROFILE_ID), where("isClaimed", "==", false)), (snapshot) => {
+            if (isInitialLoadComplete && snapshot.docs.length > 0) {
+                const incoming = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                showIncomingTransferModal(incoming);
+            }
+        }, err => console.error("Listener transfer masuk gagal:", err)));
+    }
+    
+    function clearDataAndUI() {
+        allTransactions = []; expenseCategories = []; incomeCategories = []; transfers = [];
+        expenseCategoryMap = {}; incomeCategoryMap = {};
+        listeners.forEach(unsub => unsub());
+        listeners = [];
+        isInitialLoadComplete = false;
+        selectedTransactions.clear();
+        selectedExpenseCategories.clear();
+        selectedIncomeCategories.clear();
+        appContent.style.display = 'none';
+        loginScreen.style.display = 'flex';
+    }
+
+    // --- Rendering Functions ---
+    function renderAll() {
+      if (!isInitialLoadComplete || !auth.currentUser) return;
+      renderDashboard();
+      renderExpenseCategories();
+      renderIncomeCategories();
+      updateTransactionCategoryDropdown();
+      renderTransactions();
+      renderCharts();
+      renderTransfers();
+      updateActionButtonsState();
+    }
+
+    function getTransactionsForMonth(date) {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      end.setHours(23, 59, 59, 999);
+      return allTransactions.filter(t => { 
+          const d = t.date && t.date.toDate ? t.date.toDate() : null; 
+          return d && d >= start && d <= end; 
+      });
+    }
+
+    function getFilteredAndSortedTransactions() {
+        let transactions = getTransactionsForMonth(currentDate);
+        const searchTerm = el('transaction-search').value.toLowerCase();
+        
+        if (searchTerm) {
+            transactions = transactions.filter(t => {
+                const dateStr = t.date?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }).toLowerCase() || '';
+                const categoryName = (expenseCategoryMap[t.category] || incomeCategoryMap[t.category] || '').toLowerCase();
+                return t.description.toLowerCase().includes(searchTerm) ||
+                       t.amount.toString().includes(searchTerm) ||
+                       dateStr.includes(searchTerm) ||
+                       categoryName.includes(searchTerm);
+            });
+        }
+
+        if (activeFilters.type !== 'all') {
+            transactions = transactions.filter(t => t.type === activeFilters.type);
+        }
+        if (activeFilters.category !== 'all') {
+            transactions = transactions.filter(t => t.category === activeFilters.category);
+        }
+
+        return transactions.sort((a, b) => {
+            const dateA = a.date?.toDate() || 0;
+            const dateB = b.date?.toDate() || 0;
+            return sortOrder === 'asc' ? dateA - dateB : dateB - a;
+        });
+    }
+
+    function renderDashboard() {
+      const transactions = getTransactionsForMonth(currentDate);
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      el('current-month-display').textContent = startOfMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      const now = new Date();
+      const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      el('next-month-btn').disabled = startOfMonth >= startOfCurrentMonth;
+      el('next-month-btn').classList.toggle('opacity-50', el('next-month-btn').disabled);
+      const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const balance = income - expenses;
+      const totalCashBalance = allTransactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+      el('total-income').textContent = formatCompactCurrency(income);
+    el('total-expenses').textContent = formatCompactCurrency(expenses);
+    el('balance').textContent = formatCompactCurrency(balance);
+    el('total-cash-balance').textContent = formatCompactCurrency(totalCashBalance);
+    }
+
+    function renderExpenseCategories() {
+        const listEl = el('category-expense-list');
+        const searchTerm = el('category-expense-search').value.toLowerCase();
+        const filteredCategories = expenseCategories.filter(cat => !cat.isArchived && cat.name.toLowerCase().includes(searchTerm));
+        const transactionsThisMonth = getTransactionsForMonth(currentDate);
+
+        el('select-all-expense-categories').checked = filteredCategories.length > 0 && filteredCategories.every(cat => selectedExpenseCategories.has(cat.id));
+
+        listEl.innerHTML = filteredCategories.map(cat => {
+            const isSelected = selectedExpenseCategories.has(cat.id);
+            const spent = transactionsThisMonth
+                .filter(t => t.type === 'expense' && t.category === cat.id)
+                .reduce((sum, t) => sum + t.amount, 0);
+            const budget = cat.budget || 0;
+            const progress = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+            const progressColor = progress > 90 ? 'bg-red-600' : progress > 70 ? 'bg-yellow-500' : 'bg-blue-600';
+
+            return `
+            <div class="bg-slate-100 p-3 rounded-lg flex items-center gap-4">
+                <input type="checkbox" data-id="${cat.id}" class="expense-category-checkbox custom-checkbox cursor-pointer" ${isSelected ? 'checked' : ''}>
+                <div class="flex-grow">
+                    <div class="flex justify-between items-baseline">
+                        <h4 class="font-bold text-slate-800">${cat.name}</h4>
+                        <span class="text-sm text-slate-600 font-medium">${formatCurrency(spent)} / ${formatCurrency(budget)}</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 mt-1">
+                        <div class="${progressColor} h-2 rounded-full" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined action-icon" data-action="edit-expense-category" data-id="${cat.id}">edit</span>
+                </div>
+            </div>`;
+        }).join('') || `<p class="text-slate-500 text-center py-4">Tidak ada kategori yang cocok.</p>`;
+    }
+    
+    function renderIncomeCategories() {
+        const listEl = el('category-income-list');
+        const searchTerm = el('category-income-search').value.toLowerCase();
+        const filteredCategories = incomeCategories.filter(cat => !cat.isArchived && cat.name.toLowerCase().includes(searchTerm));
+
+        el('select-all-income-categories').checked = filteredCategories.length > 0 && filteredCategories.every(cat => selectedIncomeCategories.has(cat.id));
+
+        listEl.innerHTML = filteredCategories.map(cat => {
+            const isSelected = selectedIncomeCategories.has(cat.id);
+            return `
+            <div class="bg-slate-100 p-3 rounded-lg flex items-center gap-4">
+                <input type="checkbox" data-id="${cat.id}" class="income-category-checkbox custom-checkbox cursor-pointer" ${isSelected ? 'checked' : ''}>
+                <h4 class="font-medium text-slate-800 flex-grow">${cat.name}</h4>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined action-icon" data-action="edit-income-category" data-id="${cat.id}">edit</span>
+                </div>
+            </div>`;
+        }).join('') || `<p class="text-slate-500 text-center py-4">Tidak ada kategori yang cocok.</p>`;
+    }
+
+    function updateTransactionCategoryDropdown() {
+      const type = el('transaction-type').value;
+      const dropdown = el('transaction-category');
+      const categories = type === 'income' ? incomeCategories.filter(c => !c.isArchived) : expenseCategories.filter(c => !c.isArchived);
+      dropdown.innerHTML = '<option value="">Pilih Kategori...</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    function renderTransactions() {
+      const listEl = el('transaction-list');
+      const sorted = getFilteredAndSortedTransactions();
+      
+      el('select-all-transactions').checked = sorted.length > 0 && sorted.every(t => selectedTransactions.has(t.id));
+
+      listEl.innerHTML = sorted.map(t => {
+        const isIncome = t.type === 'income';
+        
+        const categoryMap = isIncome ? incomeCategoryMap : expenseCategoryMap;
+        const category = categoryMap[t.category];
+        let categoryName = category ? category.name : 'Tanpa Kategori';
+        if (category && category.isArchived) {
+            categoryName += ' (Diarsipkan)';
+        }
+
+        const dateStr = t.date?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) || 'Tanggal tidak valid';
+        const isSelected = selectedTransactions.has(t.id);
+        
+        return `
+            <div>
+                <div class="bg-slate-50 p-3 rounded-lg flex flex-wrap justify-between items-center gap-x-3 gap-y-2 sm:hidden hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center gap-3 flex-grow min-w-0">
+                        <input type="checkbox" data-id="${t.id}" class="transaction-checkbox custom-checkbox cursor-pointer flex-shrink-0 self-start mt-1" ${isSelected ? 'checked' : ''}>
+                        <div class="flex-grow min-w-0">
+                            <p class="font-medium text-slate-800 whitespace-normal break-words">${t.description}</p>
+                        </div>
+                    </div>
+                    <div class="w-full text-right">
+                        <p class="font-semibold text-lg ${isIncome ? 'text-green-600' : 'text-red-600'}">${formatCurrency(t.amount)}</p>
+                    </div>
+                    <div class="w-full flex justify-between items-center text-xs text-slate-500 pt-2 mt-2 border-t border-slate-200">
+                        <span>${dateStr} - (${categoryName})</span>
+                        <span class="material-symbols-outlined action-icon" data-action="edit-transaction" data-id="${t.id}">edit</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg hidden sm:flex items-center justify-between gap-3 hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center gap-3 flex-grow min-w-0">
+                        <input type="checkbox" data-id="${t.id}" class="transaction-checkbox custom-checkbox cursor-pointer flex-shrink-0" ${isSelected ? 'checked' : ''}>
+                        <div class="flex-grow min-w-0">
+                            <p class="font-medium text-slate-800 truncate" title="${t.description}">${t.description}</p>
+                            <p class="text-xs text-slate-500">${dateStr} - ${isIncome ? 'Pemasukan' : 'Pengeluaran'} (${categoryName})</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <p class="font-semibold ${isIncome ? 'text-green-600' : 'text-red-600'}">${formatCurrency(t.amount)}</p>
+                        <span class="material-symbols-outlined action-icon" data-action="edit-transaction" data-id="${t.id}">edit</span>
+                    </div>
+                </div>
+            </div>
+        `;
+      }).join('') || `<p class="text-slate-500 text-center py-4">Tidak ada transaksi yang cocok.</p>`;
+    }
+
+    function renderCharts() {
+      const transactions = getTransactionsForMonth(currentDate);
+      const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const barCtx = el('incomeExpenseChart').getContext('2d');
+      if (incomeExpenseChart) incomeExpenseChart.destroy();
+      incomeExpenseChart = new Chart(barCtx, { type: 'bar', data: { labels: ['Bulan Ini'], datasets: [{ label: 'Pemasukan', data: [income], backgroundColor: 'rgba(22, 163, 74, 0.7)' }, { label: 'Pengeluaran', data: [expenses], backgroundColor: 'rgba(220, 38, 38, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: '#475569' } }, x: { ticks: { color: '#475569' } } }, plugins: { legend: { position: 'bottom', labels: { color: '#475569' } } } } });
+      
+      const expenseByCategory = expenseCategories.filter(c => !c.isArchived).map(cat => ({ name: cat.name, total: transactions.filter(t => t.category === cat.id && t.type === 'expense').reduce((s, t) => s + t.amount, 0) })).filter(c => c.total > 0);
+      const pieCtx = el('categoryPieChart').getContext('2d');
+      if (categoryPieChart) categoryPieChart.destroy();
+      categoryPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: expenseByCategory.map(c => c.name), datasets: [{ data: expenseByCategory.map(c => c.total), backgroundColor: ['#1d4ed8', '#be123c', '#047857', '#f59e0b', '#5b21b6', '#4338ca', '#9333ea'], borderColor: '#F1F5F9' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#475569' } } } } });
+    }
+
+    function showIncomingTransferModal(transfers) {
+      const modal = el('transfer-modal');
+      let html = `<h3 class="font-bold text-lg mb-4 text-blue-800">Anda Menerima Transfer Dana!</h3>`;
+      transfers.forEach(t => {
+        html += `<div class="bg-slate-50 border p-3 rounded-md mb-2 flex justify-between items-center"><div><p class="font-semibold">${t.description}</p><p class="text-xl font-bold text-blue-700">${formatCurrency(t.amount)}</p><p class="text-xs text-slate-500">Dari: <strong>${t.senderName || 'Pengirim'}</strong></p></div><button data-transfer-id="${t.id}" class="claim-transfer-btn btn btn-success !py-2 !px-4">Klaim</button></div>`;
+      });
+      html += `<div class="flex justify-end mt-4"><button id="close-transfer-modal-btn-corp" class="btn btn-secondary">Tutup</button></div>`;
+      modal.innerHTML = html;
+      openModal(modal);
+    }
+
+    function renderTransfers() {
+      const listEl = el('transfer-history-list');
+      if (transfers.length === 0) { listEl.innerHTML = `<p class="text-slate-500 text-center">Belum ada riwayat transfer.</p>`; return; }
+      const sorted = [...transfers].sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+      listEl.innerHTML = sorted.map(t => {
+        const statusText = t.isClaimed ? 'Telah Diklaim' : 'Menunggu Klaim';
+        const statusColor = t.isClaimed ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100';
+        const dateStr = t.createdAt?.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) || '';
+        return `<div class="bg-slate-50 p-3 rounded-lg"><div class="flex justify-between items-center"><div><p class="font-semibold text-slate-800">${t.description} - ${formatCurrency(t.amount)}</p><p class="text-xs text-slate-500">Ke: ${t.recipientProfileId} (${t.recipientUserId.substring(0, 10)}...) | ${dateStr}</p></div><span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${statusText}</span></div>${t.isClaimed ? `<p class="text-xs text-slate-500 mt-1">Diklaim oleh: ${t.claimedBy.substring(0, 10)}...</p>` : ''}</div>`;
+      }).join('');
+    }
+
+    // --- UI Helpers & Event Handlers ---
+    function setButtonLoading(button, isLoading) {
+        if (!button) {
+            console.warn("setButtonLoading dipanggil dengan tombol null.");
+            return;
+        }
+        if (isLoading) {
+            button.disabled = true;
+            button.dataset.originalContent = button.innerHTML;
+            button.innerHTML = '<div class="spinner"></div>';
+        } else {
+            button.disabled = false;
+            if (button.dataset.originalContent) {
+                button.innerHTML = button.dataset.originalContent;
+                delete button.dataset.originalContent;
+            }
+        }
+    }
+
+    function showConfirmation(message) {
+      return new Promise((resolve) => {
+        const confirmModal = el('confirm-modal');
+        confirmModal.innerHTML = `<p class="text-slate-700 mb-6">${message}</p><div class="flex justify-end gap-3"><button id="confirm-cancel" class="btn btn-secondary">Batal</button><button id="confirm-ok" class="btn btn-danger">Ya</button></div>`;
+        openModal(confirmModal, '#confirm-ok');
+        el('confirm-ok').onclick = () => { closeModal(confirmModal); resolve(true); };
+        el('confirm-cancel').onclick = () => { closeModal(confirmModal); resolve(false); };
+      });
+    }
+    
+    function showNotificationModal(title, icon, message, color) {
+        const modal = el('notification-modal');
+        const colors = { green: 'text-green-600', blue: 'text-blue-600', red: 'text-red-600'};
+        modal.innerHTML = `<div class="flex justify-center items-center mb-4"><span class="material-symbols-outlined ${colors[color] || 'text-slate-600'}" style="font-size: 48px;">${icon}</span></div><h3 class="text-xl font-bold mb-2 ${colors[color] || 'text-slate-800'}">${title}</h3><p class="text-slate-600 mb-6">${message}</p><div class="flex justify-end"><button id="notification-ok-btn" class="btn btn-primary">OK</button></div>`;
+        openModal(modal, '#notification-ok-btn');
+        el('notification-ok-btn').onclick = () => closeModal(modal);
+    }
+
+    function buildCategoryMaps() {
+      expenseCategoryMap = Object.fromEntries(expenseCategories.map(cat => [cat.id, cat]));
+      incomeCategoryMap = Object.fromEntries(incomeCategories.map(cat => [cat.id, cat]));
+    }
+
+    function updateActionButtonsState() {
+        el('delete-selected-btn').disabled = selectedTransactions.size === 0;
+        el('archive-selected-expense-btn').disabled = selectedExpenseCategories.size === 0;
+        el('archive-selected-income-btn').disabled = selectedIncomeCategories.size === 0;
+    }
+
+    // --- Event Listeners Setup ---
+    modalBackdrop.addEventListener('click', () => {
+      closeModal(el('edit-modal'));
+      closeModal(el('confirm-modal'));
+      closeModal(el('transfer-modal'));
+      closeModal(el('notification-modal'));
+      closeModal(el('app-guide-modal'));
+      closeModal(el('filter-modal'));
+    });
+
+    appGuideBtn.addEventListener('click', () => openModal(appGuideModal));
+    closeAppGuideBtn.addEventListener('click', () => closeModal(appGuideModal));
+
+    googleSignInBtn.addEventListener('click', () => signInWithPopup(auth, new GoogleAuthProvider()).catch(err => console.error(err)));
+    signOutBtn.addEventListener('click', () => signOut(auth).catch(err => console.error(err)));
+    
+    el('prev-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); selectedTransactions.clear(); renderAll(); });
+    el('next-month-btn').addEventListener('click', () => { if (!el('next-month-btn').disabled) { currentDate.setMonth(currentDate.getMonth() + 1); selectedTransactions.clear(); renderAll(); } });
+    el('today-btn').addEventListener('click', () => { currentDate = new Date(); selectedTransactions.clear(); renderAll(); });
+
+    el('category-expense-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); hideError();
+        const button = e.target.querySelector('button[type="submit"]');
+        const name = el('category-expense-name').value;
+        const budget = el('category-expense-budget').value;
+        if (!name || !budget || Number(budget) < 0) return showError('Nama kategori dan anggaran positif harus diisi.');
+        setButtonLoading(button, true);
+        try {
+            await addDoc(collection(db, `users/${userId}/wallets/${PROFILE_ID}/expense_categories`), { name: toTitleCase(name), budget: Number(budget), isArchived: false });
+            el('category-expense-form').reset();
+        } catch (err) { console.error(err); showError('Gagal menambah kategori.'); }
+        finally { setButtonLoading(button, false); }
+    });
+
+    el('category-income-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); hideError();
+        const button = e.target.querySelector('button[type="submit"]');
+        const name = el('category-income-name').value;
+        if (!name) return showError('Nama kategori harus diisi.');
+        setButtonLoading(button, true);
+        try {
+            await addDoc(collection(db, `users/${userId}/wallets/${PROFILE_ID}/income_categories`), { name: toTitleCase(name), isArchived: false });
+            el('category-income-form').reset();
+        } catch (err) { console.error(err); showError('Gagal menambah kategori.'); }
+        finally { setButtonLoading(button, false); }
+    });
+    
+    el('transaction-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); hideError();
+        const button = e.target.querySelector('button[type="submit"]');
+        const description = el('transaction-description').value;
+        const amount = el('transaction-amount').value;
+        if (!description || !amount || Number(amount) <= 0) return showError('Deskripsi dan jumlah positif tidak boleh kosong.');
+        setButtonLoading(button, true);
+        try {
+            await addDoc(collection(db, `users/${userId}/wallets/${PROFILE_ID}/transactions`), {
+                description: toTitleCase(description),
+                amount: Number(amount),
+                type: el('transaction-type').value,
+                category: el('transaction-category').value,
+                date: serverTimestamp()
+            });
+            el('transaction-form').reset();
+        } catch (err) { console.error(err); showError('Gagal menambah transaksi.'); }
+        finally { setButtonLoading(button, false); }
+    });
+    
+    el('transaction-type').addEventListener('change', updateTransactionCategoryDropdown);
+
+    el('transfer-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); hideError();
+        const button = e.target.querySelector('button[type="submit"]');
+        const recipientUserId = el('transfer-recipient-user-id').value.trim();
+        const recipientProfileId = el('transfer-recipient-profile-id').value.trim();
+        const amount = Number(el('transfer-amount').value);
+        const description = el('transfer-description').value;
+        if (!recipientUserId || !recipientProfileId || !amount || amount <= 0 || !description) return showNotificationModal('Gagal', 'error', 'Semua field transfer harus diisi dengan benar.', 'red');
+        if (recipientProfileId === PROFILE_ID) {
+            showNotificationModal('Transfer Gagal', 'block', 'Anda tidak dapat mengirim dana ke profil perusahaan Anda sendiri.', 'red');
+            return; // Hentikan eksekusi fungsi
+        }
+        setButtonLoading(button, true);
+        try {
+            const transferRef = collection(db, `artifacts/${appId}/public/data/transfers`);
+            await addDoc(transferRef, {
+                senderUserId: userId,
+                senderProfileId: PROFILE_ID,
+                senderName: auth.currentUser.displayName,
+                recipientUserId: recipientUserId,
+                recipientProfileId: recipientProfileId,
+                amount: amount,
+                description: description,
+                createdAt: serverTimestamp(),
+                isClaimed: false,
+                claimedBy: null,
+                claimedAt: null
+            });
+            await addDoc(collection(db, `users/${userId}/wallets/${PROFILE_ID}/transactions`), {
+                description: `Transfer Dana: ${description}`,
+                amount: amount,
+                type: 'expense',
+                category: '',
+                date: serverTimestamp()
+            });
+            showNotificationModal('Sukses', 'check_circle', 'Transfer berhasil dikirim dan dicatat sebagai pengeluaran.', 'green');
+            el('transfer-form').reset();
+        } catch (err) {
+            console.error("Gagal mengirim transfer:", err);
+            showNotificationModal('Error Server', 'gpp_bad', 'Gagal mengirim transfer. Pastikan aturan keamanan Firestore mengizinkan penulisan ke koleksi transfer publik.', 'red');
+        } finally {
+            setButtonLoading(button, false);
+        }
+    });
+
+    el('transaction-search').addEventListener('input', () => renderTransactions());
+    
+    el('sort-btn').addEventListener('click', () => {
+        sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        const icon = el('sort-btn').querySelector('.material-symbols-outlined');
+        icon.style.transform = sortOrder === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+        renderTransactions();
+    });
+
+    el('filter-btn').addEventListener('click', () => {
+        const filterCategory = el('filter-category');
+        const incomeOpts = incomeCategories.filter(c => !c.isArchived).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        const expenseOpts = expenseCategories.filter(c => !c.isArchived).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+        filterCategory.innerHTML = `
+            <option value="all">Semua Kategori</option>
+            <optgroup label="Pemasukan">${incomeOpts}</optgroup>
+            <optgroup label="Pengeluaran">${expenseOpts}</optgroup>
+        `;
+        
+        el('filter-type').value = activeFilters.type;
+        el('filter-category').value = activeFilters.category;
+        openModal(el('filter-modal'));
+    });
+
+    el('filter-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        activeFilters.type = el('filter-type').value;
+        activeFilters.category = el('filter-category').value;
+        renderTransactions();
+        closeModal(el('filter-modal'));
+    });
+
+    el('filter-reset-btn').addEventListener('click', () => {
+        activeFilters = { type: 'all', category: 'all' };
+        el('filter-form').reset();
+        renderTransactions();
+        closeModal(el('filter-modal'));
+    });
+
+
+    el('select-all-transactions').addEventListener('change', (e) => {
+        const filteredTransactions = getFilteredAndSortedTransactions();
+        filteredTransactions.forEach(t => {
+            if (e.target.checked) {
+                selectedTransactions.add(t.id);
+            } else {
+                selectedTransactions.delete(t.id);
+            }
+        });
+        renderTransactions();
+        updateActionButtonsState();
+    });
+
+    el('transaction-list').addEventListener('change', (e) => {
+        if (e.target.matches('.transaction-checkbox')) {
+            const id = e.target.dataset.id;
+            if (e.target.checked) {
+                selectedTransactions.add(id);
+            } else {
+                selectedTransactions.delete(id);
+            }
+            const filteredTransactions = getFilteredAndSortedTransactions();
+            el('select-all-transactions').checked = filteredTransactions.length > 0 && filteredTransactions.every(t => selectedTransactions.has(t.id));
+            updateActionButtonsState();
+        }
+    });
+
+    el('delete-selected-btn').addEventListener('click', async () => {
+        if (selectedTransactions.size === 0) return;
+        const button = el('delete-selected-btn');
+
+        if (await showConfirmation(`Anda yakin ingin menghapus ${selectedTransactions.size} transaksi yang dipilih?`)) {
+            setButtonLoading(button, true);
+            try {
+                const batch = writeBatch(db);
+                selectedTransactions.forEach(id => {
+                    const docRef = doc(db, `users/${userId}/wallets/${PROFILE_ID}/transactions/${id}`);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
+                selectedTransactions.clear();
+            } catch (err) {
+                console.error("Gagal menghapus transaksi terpilih:", err);
+                showError("Gagal menghapus transaksi.");
+            } finally {
+                setButtonLoading(button, false);
+                updateActionButtonsState();
+            }
+        }
+    });
+
+    ['expense', 'income'].forEach(type => {
+        el(`category-${type}-search`).addEventListener('input', () => {
+            type === 'expense' ? renderExpenseCategories() : renderIncomeCategories();
+        });
+
+        el(`select-all-${type}-categories`).addEventListener('change', (e) => {
+            const selectedSet = type === 'expense' ? selectedExpenseCategories : selectedIncomeCategories;
+            const categoryList = type === 'expense' ? expenseCategories : incomeCategories;
+            const searchTerm = el(`category-${type}-search`).value.toLowerCase();
+            const filtered = categoryList.filter(c => !c.isArchived && c.name.toLowerCase().includes(searchTerm));
+            
+            filtered.forEach(cat => {
+                if (e.target.checked) selectedSet.add(cat.id);
+                else selectedSet.delete(cat.id);
+            });
+            type === 'expense' ? renderExpenseCategories() : renderIncomeCategories();
+            updateActionButtonsState();
+        });
+
+        el(`category-${type}-list`).addEventListener('change', (e) => {
+            if (e.target.matches(`.${type}-category-checkbox`)) {
+                const id = e.target.dataset.id;
+                const selectedSet = type === 'expense' ? selectedExpenseCategories : selectedIncomeCategories;
+                if (e.target.checked) selectedSet.add(id);
+                else selectedSet.delete(id);
+                const categoryList = type === 'expense' ? expenseCategories : incomeCategories;
+                const searchTerm = el(`category-${type}-search`).value.toLowerCase();
+                const filtered = categoryList.filter(c => !c.isArchived && c.name.toLowerCase().includes(searchTerm));
+                el(`select-all-${type}-categories`).checked = filtered.length > 0 && filtered.every(c => selectedSet.has(c.id));
+                updateActionButtonsState();
+            }
+        });
+
+        el(`archive-selected-${type}-btn`).addEventListener('click', async (e) => {
+            const selectedSet = type === 'expense' ? selectedExpenseCategories : selectedIncomeCategories;
+            if (selectedSet.size === 0) return;
+            
+            if (await showConfirmation(`Anda yakin ingin mengarsipkan ${selectedSet.size} kategori yang dipilih?`)) {
+                const button = e.currentTarget;
+                setButtonLoading(button, true);
+                try {
+                    const batch = writeBatch(db);
+                    selectedSet.forEach(id => {
+                        const docRef = doc(db, `users/${userId}/wallets/${PROFILE_ID}/${type}_categories/${id}`);
+                        batch.update(docRef, { isArchived: true });
+                    });
+                    await batch.commit();
+                    selectedSet.clear();
+                } catch (err) {
+                    console.error("Gagal mengarsipkan:", err);
+                    showError("Gagal mengarsipkan kategori.");
+                } finally {
+                    setButtonLoading(button, false);
+                }
+            }
+        });
+    });
+
+    document.body.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('claim-transfer-btn')) {
+            const button = e.target;
+            const transferId = button.dataset.transferId;
+            setButtonLoading(button, true);
+            const transferDocRef = doc(db, `artifacts/${appId}/public/data/transfers`, transferId);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const transferDoc = await transaction.get(transferDocRef);
+                    if (!transferDoc.exists() || transferDoc.data().isClaimed) throw new Error("Transfer tidak valid atau sudah diklaim.");
+                    const transferData = transferDoc.data();
+                    const incomeCollectionRef = collection(db, `users/${userId}/wallets/${PROFILE_ID}/transactions`);
+                    transaction.set(doc(incomeCollectionRef), {
+                        description: `Penerimaan Dana: ${transferData.description} (dari ${transferData.senderName || 'Pengirim'})`,
+                        amount: transferData.amount, type: 'income', category: '', date: serverTimestamp()
+                    });
+                    transaction.update(transferDocRef, { isClaimed: true, claimedBy: userId, claimedAt: serverTimestamp() });
+                });
+                showNotificationModal('Sukses', 'check_circle', 'Dana berhasil diklaim dan ditambahkan ke pemasukan.', 'green');
+                closeModal(el('transfer-modal'));
+            } catch (error) {
+                console.error("Gagal klaim transfer:", error);
+                showNotificationModal('Gagal', 'error', error.message || 'Gagal mengklaim transfer.', 'red');
+            } finally {
+                setButtonLoading(button, false);
+            }
+        } else if (e.target.id === 'close-transfer-modal-btn-corp') {
+            closeModal(el('transfer-modal'));
+        }
+
+        const actionTarget = e.target.closest('[data-action]');
+        if (!actionTarget) return;
+        const action = actionTarget.dataset.action;
+        const id = actionTarget.dataset.id;
+        
+        if (action.startsWith('edit-')) {
+            const isTx = action === 'edit-transaction';
+            const isExpenseCat = action === 'edit-expense-category';
+            const isIncomeCat = action === 'edit-income-category';
+            const collectionName = isTx ? 'transactions' : (isExpenseCat ? 'expense_categories' : 'income_categories');
+            
+            try {
+                const docRef = doc(db, `users/${userId}/wallets/${PROFILE_ID}/${collectionName}/${id}`);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) return showError("Item tidak ditemukan.");
+                const item = docSnap.data();
+                const editModal = el('edit-modal');
+                let formHtml = '';
+
+                if (isExpenseCat) {
+                    formHtml = `<form id="edit-form-cat" class="space-y-4"><h3 class="text-xl font-bold mb-4">Edit Kategori Pengeluaran</h3><input type="text" id="edit-cat-name" value="${item.name}" class="input-field" required><input type="number" id="edit-cat-budget" value="${item.budget}" class="input-field" min="0" required><div class="mt-6 flex justify-end gap-3"><button type="button" class="btn-cancel-modal btn btn-secondary">Batal</button><button type="submit" class="btn btn-primary">Perbarui</button></div></form>`;
+                } else if (isIncomeCat) {
+                    formHtml = `<form id="edit-form-cat" class="space-y-4"><h3 class="text-xl font-bold mb-4">Edit Kategori Pemasukan</h3><input type="text" id="edit-cat-name" value="${item.name}" class="input-field" required><div class="mt-6 flex justify-end gap-3"><button type="button" class="btn-cancel-modal btn btn-secondary">Batal</button><button type="submit" class="btn btn-primary">Perbarui</button></div></form>`;
+                } else if (isTx) {
+                    formHtml = `<form id="edit-form-tx" class="space-y-4"><h3 class="text-xl font-bold mb-4">Edit Transaksi</h3><input type="text" id="edit-tx-desc" value="${item.description}" class="input-field" required><input type="number" id="edit-tx-amount" value="${item.amount}" class="input-field" min="0" required><select id="edit-tx-cat" class="input-field"></select><div class="mt-6 flex justify-end gap-3"><button type="button" class="btn-cancel-modal btn btn-secondary">Batal</button><button type="submit" class="btn btn-primary">Perbarui</button></div></form>`;
+                }
+                
+                editModal.innerHTML = formHtml;
+                
+                if (isTx) {
+                    const catDropdown = editModal.querySelector('#edit-tx-cat');
+                    const categoriesForTx = item.type === 'income' ? incomeCategories.filter(c => !c.isArchived) : expenseCategories.filter(c => !c.isArchived);
+                    catDropdown.innerHTML = '<option value="">Pilih Kategori...</option>' + categoriesForTx.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    catDropdown.value = item.category;
+                }
+
+                openModal(editModal);
+                editModal.querySelector('.btn-cancel-modal').onclick = () => closeModal(editModal);
+                editModal.querySelector('form').onsubmit = async (ev) => {
+                    ev.preventDefault();
+                    const button = ev.target.querySelector('button[type="submit"]');
+                    setButtonLoading(button, true);
+                    try {
+                        let updateData = {};
+                        if (isExpenseCat) {
+                            updateData = { name: toTitleCase(el('edit-cat-name').value), budget: Number(el('edit-cat-budget').value) };
+                        } else if (isIncomeCat) {
+                            updateData = { name: toTitleCase(el('edit-cat-name').value) };
+                        } else if (isTx) {
+                            updateData = { description: toTitleCase(el('edit-tx-desc').value), amount: Number(el('edit-tx-amount').value), category: el('edit-tx-cat').value };
+                        }
+                        await updateDoc(docRef, updateData);
+                        closeModal(editModal);
+                    } catch (err) { showError("Gagal memperbarui."); console.error(err); }
+                    finally { setButtonLoading(button, false); }
+                };
+            } catch (err) { console.error(err); showError("Gagal membuka editor."); }
+        }
+    });
+
+    el('export-btn').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+      const monthStr = currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      const currentMonthTxs = getTransactionsForMonth(currentDate);
+      const incomeThisMonth = currentMonthTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expenseThisMonth = currentMonthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const totalCash = allTransactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+
+      const summaryData = [
+        { A: 'Laporan Keuangan Perusahaan', B: monthStr },
+        { A: 'Pemasukan Bulan Ini', B: incomeThisMonth },
+        { A: 'Pengeluaran Bulan Ini', B: expenseThisMonth },
+        { A: 'Arus Kas Bersih', B: incomeThisMonth - expenseThisMonth },
+        { A: 'Total Kas & Bank (Akumulatif)', B: totalCash },
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData, { skipHeader: true });
+      
+      if (wsSummary['B2']) wsSummary['B2'].z = '"Rp"#,##0';
+      if (wsSummary['B3']) wsSummary['B3'].z = '"Rp"#,##0';
+      if (wsSummary['B4']) wsSummary['B4'].z = '"Rp"#,##0';
+      if (wsSummary['B5']) wsSummary['B5'].z = '"Rp"#,##0';
+
+      wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan");
+      
+      const transactionData = currentMonthTxs.map(t => {
+        const dateObj = t.date?.toDate() || new Date();
+        
+        const isIncome = t.type === 'income';
+        const categoryMap = isIncome ? incomeCategoryMap : expenseCategoryMap;
+        const category = categoryMap[t.category];
+        let categoryName = category ? category.name : 'Tanpa Kategori';
+        if (category && category.isArchived) {
+            categoryName += ' (Diarsipkan)';
+        }
+
+        return { Tanggal: dateObj.toLocaleDateString('id-ID'), Deskripsi: t.description, Tipe: t.type === 'income' ? 'Pemasukan' : 'Pengeluaran', Kategori: categoryName, Jumlah: t.amount }
+      });
+      const wsTransactions = XLSX.utils.json_to_sheet(transactionData);
+      wsTransactions['!cols'] = [{ wch: 15 }, { wch: 40 }, { wch: 15 }, { wch: 25 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsTransactions, "Detail Transaksi");
+      
+      XLSX.writeFile(wb, `Laporan Perusahaan - ${monthStr}.xlsx`);
+    });
+  </script>
+</body>
+</html>
