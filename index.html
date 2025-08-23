@@ -1325,10 +1325,10 @@
         
         function getRandomCard() {
             const rand = Math.random();
-            if (rand < 0.01) return 'exp_boost_x2';
-            if (rand < 0.08) return 'penalty_negation';
-            if (rand < 0.12) return 'skip_weekly';
-            if (rand < 0.15) return 'skip_monthly';
+            if (rand < 0.1) return 'exp_boost_x2';
+            if (rand < 0.15) return 'penalty_negation';
+            if (rand < 0.25) return 'skip_weekly';
+            if (rand < 0.2) return 'skip_monthly';
             return 'xp_bonus';
         }
 
@@ -3381,3 +3381,4 @@
     </script>
 </body>
 </html>
+
