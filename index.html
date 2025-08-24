@@ -883,15 +883,15 @@
             const baseQuests = [
                 { id: 'q1', text: 'Catat transaksi pertamamu', xp: 20, category: 'Misi Dasar', type: 'log_transaction_total', target: 1, recurring: false },
                 { id: 'q2', text: 'Buat kategori anggaran pertamamu', xp: 30, category: 'Misi Dasar', type: 'create_category', target: 1, recurring: false },
-                { id: 'daily_login', text: 'Login Harian', xp: 10, category: 'Misi Harian', type: 'daily_login', recurring: true, noPenalty: true, rewardChance: 0.03 },
-                { id: 'weekly_no_spend_challenge', text: 'Tantangan Tanpa Belanja Mingguan', xp: 75, category: 'Misi Mingguan', type: 'no_spend_challenge', recurring: true, rewardChance: 0.10 },
-                { id: 'weekly_review', text: 'Review pengeluaran mingguan', xp: 50, category: 'Misi Mingguan', type: 'manual', recurring: true },
-                { id: 'weekly_no_new_debt', text: 'Tidak ada utang baru minggu ini', xp: 75, category: 'Misi Mingguan', type: 'manual', recurring: true, rewardChance: 0.10 },
-                { id: 'q3', text: 'Catat 5 transaksi bulan ini', xp: 50, category: 'Misi Bulanan', type: 'log_transaction_monthly', target: 5, recurring: true },
-                { id: 'monthly_special', text: 'Catat 20 transaksi bulan ini', xp: 100, category: 'Misi Bulanan', type: 'log_transaction_monthly', target: 20, recurring: true, rewardChance: 0.25 },
-                { id: 'm1', text: 'Saving rate di atas 50%', xp: 200, category: 'Misi Bulanan', type: 'saving_rate', target: 50, recurring: true },
-                { id: 'monthly_bills_on_time', text: 'Bayar semua tagihan tepat waktu bulan ini', xp: 100, category: 'Misi Bulanan', type: 'manual', recurring: true, rewardChance: 0.10 },
-                { id: 'monthly_emergency_fund', text: 'Tambah saldo dana darurat bulan ini', xp: 150, category: 'Misi Bulanan', type: 'manual', recurring: true, rewardChance: 0.15 },
+                { id: 'daily_login', text: 'Login Harian', xp: 10, category: 'Misi Harian', type: 'daily_login', recurring: true, noPenalty: true, rewardChance: 0.15 },
+                { id: 'weekly_no_spend_challenge', text: 'Tantangan Tanpa Belanja Mingguan', xp: 75, category: 'Misi Mingguan', type: 'no_spend_challenge', recurring: true, rewardChance: 0.25 },
+                { id: 'weekly_review', text: 'Review pengeluaran mingguan', xp: 50, category: 'Misi Mingguan', type: 'manual', recurring: true, rewardChance: 0.30 },
+                { id: 'weekly_no_new_debt', text: 'Tidak ada utang baru minggu ini', xp: 75, category: 'Misi Mingguan', type: 'manual', recurring: true, rewardChance: 0.30 },
+                { id: 'q3', text: 'Catat 5 transaksi bulan ini', xp: 50, category: 'Misi Bulanan', type: 'log_transaction_monthly', target: 5, recurring: true, rewardChance: 0.30 },
+                { id: 'monthly_special', text: 'Catat 20 transaksi bulan ini', xp: 100, category: 'Misi Bulanan', type: 'log_transaction_monthly', target: 20, recurring: true, rewardChance: 0.30 },
+                { id: 'm1', text: 'Saving rate di atas 50%', xp: 200, category: 'Misi Bulanan', type: 'saving_rate', target: 50, recurring: true, rewardChance: 0.30 },
+                { id: 'monthly_bills_on_time', text: 'Bayar semua tagihan tepat waktu bulan ini', xp: 100, category: 'Misi Bulanan', type: 'manual', recurring: true, rewardChance: 0.30 },
+                { id: 'monthly_emergency_fund', text: 'Tambah saldo dana darurat bulan ini', xp: 150, category: 'Misi Bulanan', type: 'manual', recurring: true, rewardChance: 0.30 },
                 { id: 'g1', text: 'Umroh', xp: 2500, category: 'Misi Utama', type: 'manual', recurring: false, guaranteedReward: 2 },
                 { id: 'g2', text: 'Membeli Penthouse', xp: 10000, category: 'Misi Utama', type: 'manual', recurring: false, guaranteedReward: 2 },
                 { id: 'g3', text: 'Membelikan Orang Tua Mobil', xp: 5000, category: 'Misi Utama', type: 'manual', recurring: false, guaranteedReward: 2 },
@@ -1327,8 +1327,8 @@
             const rand = Math.random();
             if (rand < 0.1) return 'exp_boost_x2';
             if (rand < 0.15) return 'penalty_negation';
-            if (rand < 0.25) return 'skip_weekly';
             if (rand < 0.2) return 'skip_monthly';
+            if (rand < 0.25) return 'skip_weekly';
             return 'xp_bonus';
         }
 
@@ -3381,4 +3381,3 @@
     </script>
 </body>
 </html>
-
