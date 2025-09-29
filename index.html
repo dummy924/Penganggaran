@@ -460,6 +460,7 @@
                         <select id="category-type" class="input-field">
                             <option value="bill">Tipe: Tagihan (Diingatkan jika belum lunas)</option>
                             <option value="limit">Tipe: Batas Belanja (Diingatkan jika terlampaui)</option>
+                            <option value="neutral">Tipe: Netral (Hanya Pelacakan)</option>
                         </select>
                         <button type="submit" class="btn btn-primary w-full"><span class="material-symbols-outlined icon">add_circle</span> Tambah Kategori</button>
                     </form>
@@ -591,10 +592,15 @@
                 </section>
 
                 <section id="debt-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
-                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-orange-400"><i data-lucide="book-user"></i> Catatan Utang/Piutang</h2>
-                         <button id="delete-selected-debts-btn" data-action="delete-selected-debts" class="btn btn-danger text-sm py-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <span class="material-symbols-outlined icon pointer-events-none">delete</span> Hapus
+                        <button id="delete-selected-debts-btn" ...>...</button>
+                    </div>
+
+                    <div class="mb-6">
+                        <button id="sync-old-debts-btn" class="btn btn-secondary w-full">
+                            <span class="material-symbols-outlined icon">sync</span>
+                            Sinkronkan Riwayat Lama ke Transaksi
                         </button>
                     </div>
                     <div class="flex items-center gap-3 mb-4">
@@ -615,7 +621,7 @@
                     <div class="mb-4">
                         <input type="text" id="debt-search" placeholder="Cari nama..." class="input-field">
                     </div>
-                    <div id="debt-list" class="space-y-4"></div>
+                    <div id="debt-list" class="space-y-4 max-h-80 overflow-y-auto pr-2"></div>
                 </section>
                 
                  <section class="bg-slate-800 p-6 rounded-2xl shadow-lg">
@@ -1021,17 +1027,27 @@
             selectAllCategoriesCheckbox.checked = filteredCategories.length > 0 && filteredCategories.every(cat => selectedCategories.has(cat.id));
             
             listEl.innerHTML = categoriesWithSpent.map(cat => {
-                const progressColor = cat.progress > 100 ? 'bg-red-500' : cat.progress > 75 ? 'bg-yellow-500' : 'bg-green-500';
                 const isSelected = selectedCategories.has(cat.id);
                 const isChallenge = cat.isChallenge || false;
-                const typeLabel = cat.type === 'limit' ? 'Batas Belanja' : 'Tagihan';
-                const typeColor = cat.type === 'limit' ? 'text-cyan-400' : 'text-yellow-400';
+                const isNeutral = cat.type === 'neutral'; // BARU
 
-                return `
-                    <div class="bg-slate-700/50 p-4 rounded-lg flex items-center gap-4">
-                        <input type="checkbox" data-id="${cat.id}" class="category-checkbox custom-checkbox rounded" ${isSelected ? 'checked' : ''}>
-                        <div class="flex-grow">
-                             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                // BARU: Logika untuk menentukan konten dinamis berdasarkan tipe
+                let contentHtml;
+                if (isNeutral) {
+                    contentHtml = `
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-200 mb-1">${cat.name}</h4>
+                            <span class="text-xs font-semibold text-gray-400">Netral (Pelacakan)</span>
+                        </div>
+                        <span class="text-lg font-bold text-slate-300 mt-1 sm:mt-0">${formatCurrency(cat.spent)}</span>
+                    `;
+                } else {
+                    const progressColor = cat.progress > 100 ? 'bg-red-500' : cat.progress > 75 ? 'bg-yellow-500' : 'bg-green-500';
+                    const typeLabel = cat.type === 'limit' ? 'Batas Belanja' : 'Tagihan';
+                    const typeColor = cat.type === 'limit' ? 'text-cyan-400' : 'text-yellow-400';
+                    contentHtml = `
+                        <div class="w-full">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                                 <div>
                                     <h4 class="text-lg font-bold text-slate-200 mb-1">${cat.name}</h4>
                                     <span class="text-xs font-semibold ${typeColor}">${typeLabel}</span>
@@ -1042,8 +1058,17 @@
                                 <div class="${progressColor} h-2.5 rounded-full" style="width: ${Math.min(cat.progress, 100)}%"></div>
                             </div>
                         </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-slate-700/50 p-4 rounded-lg flex items-center gap-4">
+                        <input type="checkbox" data-id="${cat.id}" class="category-checkbox custom-checkbox rounded" ${isSelected ? 'checked' : ''}>
+                        <div class="flex-grow flex justify-between items-center ${isNeutral ? 'flex-col sm:flex-row items-start sm:items-center' : ''}">
+                            ${contentHtml}
+                        </div>
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined action-icon challenge-flag ${isChallenge ? 'active' : ''}" data-action="toggle-challenge" data-id="${cat.id}" title="Tandai sebagai Tantangan: Aktifkan misi tanpa belanja untuk kategori ini.">flag</span>
+                            <span class="material-symbols-outlined action-icon challenge-flag ${isChallenge ? 'active' : ''}" data-action="toggle-challenge" data-id="${cat.id}" title="Tandai sebagai Tantangan...">flag</span>
                             <span class="material-symbols-outlined action-icon" data-action="edit-category" data-id="${cat.id}" aria-label="Edit Kategori">edit</span>
                         </div>
                     </div>`;
@@ -1273,6 +1298,42 @@
                 }
             }
             listEl.innerHTML = html;
+        }
+
+        // BARU: Fungsi untuk mencari kategori, atau membuatnya jika tidak ada.
+        async function getOrCreateCategory(name, type) {
+            const isIncome = type === 'income';
+            const collectionName = isIncome ? 'income_categories' : 'categories';
+            const localCache = isIncome ? incomeCategories : categories;
+            
+            // 1. Cek di cache lokal dulu
+            let existingCategory = localCache.find(cat => cat.name === name && !cat.isArchived);
+            if (existingCategory) {
+                return existingCategory.id;
+            }
+
+            // 2. Jika tidak ada, buat baru di Firestore
+            try {
+                let newCategoryData;
+                if (isIncome) {
+                    newCategoryData = { name: name, isArchived: false };
+                } else {
+                    // Kategori pengeluaran "Piutang" dibuat sebagai Netral agar tidak mengganggu anggaran
+                    newCategoryData = { 
+                        name: name, 
+                        budget: 0, 
+                        type: 'neutral', 
+                        isArchived: false, 
+                        isChallenge: false 
+                    };
+                }
+                
+                const docRef = await addDoc(collection(db, `users/${userId}/${collectionName}`), newCategoryData);
+                return docRef.id; // Kembalikan ID dari kategori yang baru dibuat
+            } catch (err) {
+                console.error(`Gagal membuat kategori otomatis '${name}':`, err);
+                return ''; // Kembalikan string kosong jika gagal
+            }
         }
 
         async function updateUserProfileUI() {
@@ -1626,7 +1687,7 @@
             let unpaidBills = [];
             let overspentBudgets = [];
 
-            categories.filter(cat => !cat.isArchived && cat.budget > 0).forEach(cat => {
+            categories.filter(cat => !cat.isArchived && cat.type !== 'neutral' && cat.budget > 0).forEach(cat => {
                 const spent = transactions
                     .filter(t => t.category === cat.id && t.type === 'expense')
                     .reduce((s, t) => s + t.amount, 0);
@@ -2517,12 +2578,38 @@
                 }
                 else if (action === 'toggle-debt-paid') {
                     const debt = debts.find(d => d.id === id);
-                    if (debt) {
-                        await updateDoc(doc(db, `users/${userId}/debts/${id}`), { isPaid: !debt.isPaid });
+                    if (debt && !debt.isPaid) {
+                        try {
+                            const isOriginalDebt = debt.type === 'debt';
+
+                            const categoryName = isOriginalDebt ? 'Pembayaran Utang' : 'Penerimaan Piutang';
+                            const categoryType = isOriginalDebt ? 'expense' : 'income';
+                            const categoryId = await getOrCreateCategory(categoryName, categoryType);
+
+                            const transactionData = {
+                                description: isOriginalDebt
+                                    ? `Pelunasan Utang kepada: ${debt.person}`
+                                    : `Penerimaan Pelunasan Piutang dari: ${debt.person}`,
+                                amount: debt.amount,
+                                type: isOriginalDebt ? 'expense' : 'income',
+                                category: categoryId, // Gunakan ID yang didapat
+                                date: serverTimestamp()
+                            };
+
+                            await addDoc(collection(db, `users/${userId}/transactions`), transactionData);
+                            await updateDoc(doc(db, `users/${userId}/debts/${id}`), { isPaid: true });
+                            showNotificationModal('Sukses', 'check_circle', `Catatan untuk ${debt.person} ditandai lunas dan transaksi dicatat.`, 'green');
+                            } catch (err) {
+                                showError('Gagal mencatat transaksi pelunasan.');
+                                console.error(err);
+                            }
+                        } else if (debt) {
+                            await updateDoc(doc(db, `users/${userId}/debts/${id}`), { isPaid: false });
+                        }
                     }
                 }
             }
-        });
+        );
 
         async function createNewUserProfile() {
             if (isCreatingProfile) return;
@@ -2801,6 +2888,14 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 });
             } catch (e) { console.error("Firebase Init Error:", e); loadingSpinner.style.display = 'none'; showError("Gagal menginisialisasi aplikasi."); }
+
+            // BARU: Tambahkan listener untuk tombol sinkronisasi
+            // (Pastikan ini berada di dalam DOMContentLoaded atau setelahnya agar tombol ditemukan)
+            document.body.addEventListener('click', (e) => {
+                if (e.target && e.target.id === 'sync-old-debts-btn') {
+                    processUnlinkedDebts();
+                }
+            });
         });
         
         ['filter-text', 'category-search', 'income-category-search', 'goal-search', 'debt-search', 'investment-search'].forEach(id => {
@@ -3240,14 +3335,36 @@
             const button = e.target.querySelector('button[type="submit"]');
             setButtonLoading(button, true);
             try {
+                // Langkah 1: Tetap simpan catatan utang/piutang (tidak ada yang berubah di sini)
                 await addDoc(collection(db, `users/${userId}/debts`), {
                     person: toTitleCase(person),
                     amount: amount,
                     type: type,
-                    isPaid: false
+                    isPaid: false,
+                    createdAt: serverTimestamp(), 
+                    isInitialTransactionCreated: true
                 });
+
+                const isDebt = type === 'debt';
+                const categoryName = isDebt ? 'Utang' : 'Piutang';
+                const categoryType = isDebt ? 'income' : 'expense';
+                const categoryId = await getOrCreateCategory(categoryName, categoryType);  
+
+                const transactionData = {
+                    description: isDebt 
+                        ? `Penerimaan Dana dari Utang: ${toTitleCase(person)}` 
+                        : `Pemberian Piutang kepada: ${toTitleCase(person)}`,
+                    amount: amount,
+                    type: isDebt ? 'income' : 'expense',
+                    category: categoryId, // Gunakan ID yang didapat
+                    date: serverTimestamp()
+                };
+
+                // Tambahkan transaksi baru ke koleksi 'transactions'
+                await addDoc(collection(db, `users/${userId}/transactions`), transactionData);
+
                 e.target.reset();
-            } catch (err) { showError('Gagal menambah catatan utang.'); console.error(err); }
+            } catch (err) { showError('Gagal menambah catatan utang & transaksi terkait.'); console.error(err); }
             finally { setButtonLoading(button, false); }
         });
 
@@ -3378,7 +3495,65 @@
 
             modal.querySelector('#close-transfer-modal-btn').addEventListener('click', () => closeModal(modal));
         }
+
+        // BARU: Fungsi untuk memproses data utang/piutang lama
+        async function processUnlinkedDebts() {
+            const syncButton = el('sync-old-debts-btn');
+            setButtonLoading(syncButton, true);
+
+            try {
+                // 1. Ambil semua catatan utang yang belum pernah diproses
+                const debtsQuery = query(collection(db, `users/${userId}/debts`), where("isInitialTransactionCreated", "!=", true));
+                const snapshot = await getDocs(debtsQuery);
+                const unprocessedDebts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                if (unprocessedDebts.length === 0) {
+                    showNotificationModal('Info', 'info', 'Semua riwayat utang/piutang sudah tersinkronisasi.', 'blue');
+                    setButtonLoading(syncButton, false);
+                    return;
+                }
+
+                // 2. Gunakan batch write untuk efisiensi
+                const batch = writeBatch(db);
+
+                for (const debt of unprocessedDebts) {
+                    const isDebt = debt.type === 'debt';
+                    const categoryName = isDebt ? 'Utang' : 'Piutang';
+                    const categoryType = isDebt ? 'income' : 'expense';
+                    const categoryId = await getOrCreateCategory(categoryName, categoryType);
+
+                    // Buat data transaksi untuk setiap utang lama
+                    const transactionData = {
+                        description: isDebt 
+                            ? `[SINKRON] Penerimaan Utang: ${debt.person}` 
+                            : `[SINKRON] Pemberian Piutang: ${debt.person}`,
+                        amount: debt.amount,
+                        type: isDebt ? 'income' : 'expense',
+                        category: categoryId,
+                        date: debt.createdAt ? debt.createdAt : serverTimestamp() // Gunakan tanggal asli jika ada, jika tidak, gunakan tanggal hari ini
+                    };
+
+                    // Tambahkan operasi pembuatan transaksi ke batch
+                    const newTransactionRef = doc(collection(db, `users/${userId}/transactions`));
+                    batch.set(newTransactionRef, transactionData);
+
+                    // Tambahkan operasi update flag ke batch
+                    const debtRef = doc(db, `users/${userId}/debts`, debt.id);
+                    batch.update(debtRef, { isInitialTransactionCreated: true });
+                }
+
+                // 3. Jalankan semua operasi sekaligus
+                await batch.commit();
+
+                showNotificationModal('Sukses!', 'cloud_done', `${unprocessedDebts.length} riwayat lama berhasil disinkronkan ke dalam transaksi.`, 'green');
+
+            } catch (err) {
+                showError('Gagal melakukan sinkronisasi data lama.');
+                console.error("Sync error:", err);
+            } finally {
+                setButtonLoading(syncButton, false);
+            }
+        }
     </script>
 </body>
 </html>
-
