@@ -594,7 +594,9 @@
                 <section id="debt-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-orange-400"><i data-lucide="book-user"></i> Catatan Utang/Piutang</h2>
-                        <button id="delete-selected-debts-btn" ...>...</button>
+                        <button id="delete-selected-debts-btn" data-action="delete-selected-debts" class="btn btn-danger text-sm py-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <span class="material-symbols-outlined icon pointer-events-none">delete</span>
+                        </button>
                     </div>
 
                     <div class="mb-6">
@@ -3192,13 +3194,16 @@
         function renderDebts() {
             const listEl = el('debt-list');
             const searchTerm = el('debt-search').value.toLowerCase();
-            const filteredDebts = debts.filter(d => d.person.toLowerCase().includes(searchTerm)).sort((a, b) => {
-                    const dateA = a.createdAt?.toDate() || 0;
-                    const dateB = b.createdAt?.toDate() || 0;
-                    return debtSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+
+            const filteredAndSortedDebts = debts
+                .filter(d => d.person.toLowerCase().includes(searchTerm))
+                .sort((a, b) => {
+                    const timeA = a.createdAt?.toDate()?.getTime() ?? (debtSortDirection === 'desc' ? Infinity : -Infinity);
+                    const timeB = b.createdAt?.toDate()?.getTime() ?? (debtSortDirection === 'desc' ? Infinity : -Infinity);
+
+                    return debtSortDirection === 'desc' ? timeB - timeA : timeA - timeB;
                 });
 
-            // BARU: Logika untuk menampilkan/menyembunyikan ikon sortir yang sesuai
             const sortIconDesc = el('debt-sort-icon-desc');
             const sortIconAsc = el('debt-sort-icon-asc');
             if (sortIconDesc && sortIconAsc) {
@@ -3206,18 +3211,19 @@
                 sortIconAsc.classList.toggle('hidden', debtSortDirection !== 'asc');
             }
 
-            selectAllDebtsCheckbox.checked = filteredDebts.length > 0 && filteredDebts.every(d => selectedDebts.has(d.id));
+            selectAllDebtsCheckbox.checked = filteredAndSortedDebts.length > 0 && filteredAndSortedDebts.every(d => selectedDebts.has(d.id));
 
-            if (filteredDebts.length === 0) {
+            if (filteredAndSortedDebts.length === 0) {
                 listEl.innerHTML = `<p class="text-slate-500 text-center py-4">Tidak ada catatan utang/piutang yang cocok.</p>`;
                 return;
             }
-            listEl.innerHTML = filteredDebts.map(d => {
+
+            listEl.innerHTML = filteredAndSortedDebts.map(d => {
                 const isDebt = d.type === 'debt';
                 const isSelected = selectedDebts.has(d.id);
                 return `
                 <div class="bg-slate-700/50 p-3 rounded-lg flex items-center justify-between gap-3 ${d.isPaid ? 'opacity-60' : ''}">
-                     <input type="checkbox" data-id="${d.id}" class="debt-checkbox custom-checkbox rounded" ${isSelected ? 'checked' : ''}>
+                    <input type="checkbox" data-id="${d.id}" class="debt-checkbox custom-checkbox rounded" ${isSelected ? 'checked' : ''}>
                     <div class="flex-grow">
                         <p class="font-semibold text-slate-200">${d.person}</p>
                         <p class="text-sm ${isDebt ? 'text-red-400' : 'text-green-400'}">${isDebt ? 'Utang Saya' : 'Piutang'}: ${formatCurrency(d.amount)}</p>
