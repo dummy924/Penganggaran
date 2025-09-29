@@ -595,7 +595,7 @@
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 class="text-2xl font-bold flex items-center gap-3 text-orange-400"><i data-lucide="book-user"></i> Catatan Utang/Piutang</h2>
                         <button id="delete-selected-debts-btn" data-action="delete-selected-debts" class="btn btn-danger text-sm py-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <span class="material-symbols-outlined icon pointer-events-none">delete</span>
+                            <span class="material-symbols-outlined icon pointer-events-none">delete</span> Hapus
                         </button>
                     </div>
 
@@ -2808,7 +2808,13 @@
                 if(isInitialLoadComplete) renderGoals();
             }));
             listeners.push(onSnapshot(collection(db, `users/${userId}/debts`), (snap) => {
-                debts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                debts = snap.docs.map(d => {
+                    const data = d.data();
+                    const safeDate = data.createdAt?.toDate() || new Date(); 
+                    return {
+                        id: d.id, ...data, sortableDate: safeDate.getTime() 
+                    };
+                });
                 if(isInitialLoadComplete) renderDebts();
             }));
             listeners.push(onSnapshot(collection(db, `users/${userId}/investments`), (snap) => {
