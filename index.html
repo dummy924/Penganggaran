@@ -620,6 +620,11 @@
                     </form>
                     <div class="mb-4">
                         <input type="text" id="debt-search" placeholder="Cari nama..." class="input-field">
+
+                        <button id="debt-sort-btn" class="btn bg-slate-700 hover:bg-slate-600 !p-2.5" aria-label="Ubah Urutan Utang/Piutang">
+                            <span id="debt-sort-icon-desc" class="material-symbols-outlined">arrow_downward</span>
+                            <span id="debt-sort-icon-asc" class="material-symbols-outlined hidden">arrow_upward</span>
+                        </button>
                     </div>
                     <div id="debt-list" class="space-y-4 max-h-80 overflow-y-auto pr-2"></div>
                 </section>
@@ -814,6 +819,7 @@
         let selectedInvestments = new Set();
 
         let sortDirection = 'desc';
+        let debtSortDirection = 'desc';
         
         let isInitialLoadComplete = false;
         let isCreatingProfile = false;
@@ -2897,6 +2903,11 @@
                     processUnlinkedDebts();
                 }
             });
+
+            el('debt-sort-btn').addEventListener('click', () => {
+                debtSortDirection = debtSortDirection === 'desc' ? 'asc' : 'desc';
+                renderDebts(); // Panggil ulang fungsi render untuk menerapkan urutan baru
+            });
         });
         
         ['filter-text', 'category-search', 'income-category-search', 'goal-search', 'debt-search', 'investment-search'].forEach(id => {
@@ -3181,7 +3192,19 @@
         function renderDebts() {
             const listEl = el('debt-list');
             const searchTerm = el('debt-search').value.toLowerCase();
-            const filteredDebts = debts.filter(d => d.person.toLowerCase().includes(searchTerm));
+            const filteredDebts = debts.filter(d => d.person.toLowerCase().includes(searchTerm)).sort((a, b) => {
+                    const dateA = a.createdAt?.toDate() || 0;
+                    const dateB = b.createdAt?.toDate() || 0;
+                    return debtSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+                });
+
+            // BARU: Logika untuk menampilkan/menyembunyikan ikon sortir yang sesuai
+            const sortIconDesc = el('debt-sort-icon-desc');
+            const sortIconAsc = el('debt-sort-icon-asc');
+            if (sortIconDesc && sortIconAsc) {
+                sortIconDesc.classList.toggle('hidden', debtSortDirection !== 'desc');
+                sortIconAsc.classList.toggle('hidden', debtSortDirection !== 'asc');
+            }
 
             selectAllDebtsCheckbox.checked = filteredDebts.length > 0 && filteredDebts.every(d => selectedDebts.has(d.id));
 
