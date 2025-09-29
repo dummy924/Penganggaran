@@ -467,7 +467,7 @@
                     <div class="mb-4">
                         <input type="text" id="category-search" placeholder="Cari kategori..." class="input-field">
                     </div>
-                    <div id="category-list" class="space-y-4"></div>
+                    <div id="category-list" class="space-y-4 max-h-80 overflow-y-auto pr-2"></div>
                 </section>
                 
                  <section id="income-category-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
@@ -492,7 +492,7 @@
                     <div class="mb-4">
                         <input type="text" id="income-category-search" placeholder="Cari kategori pemasukan..." class="input-field">
                     </div>
-                    <div id="income-category-list" class="space-y-4"></div>
+                    <div id="income-category-list" class="space-y-4 max-h-80 overflow-y-auto pr-2"></div>
                 </section>
                 
                 <section id="goals-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg">
@@ -2423,6 +2423,7 @@
                                     <select id="edit-cat-type" class="input-field mt-1">
                                         <option value="bill">Tagihan</option>
                                         <option value="limit">Batas Belanja</option>
+                                        <option value="neutral">Netral (Hanya Pelacakan)</option>
                                     </select>
                                 </div>
                                 ` : ''}
