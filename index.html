@@ -651,6 +651,7 @@
     <div id="edit-goal-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     <div id="edit-investment-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     <div id="add-funds-goal-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
+    <div id="pay-debt-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-800 p-6 rounded-2xl shadow-lg w-11/12 max-w-md z-50"></div>
     
     <div id="inventory-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 p-6 rounded-2xl shadow-lg w-11/12 max-w-2xl z-50">
         <div class="flex justify-between items-center mb-4">
@@ -2585,37 +2586,101 @@
                         closeModal(addFundsGoalModal);
                     };
                 }
-                else if (action === 'toggle-debt-paid') {
+                else if (action === 'pay-debt') {
                     const debt = debts.find(d => d.id === id);
-                    if (debt && !debt.isPaid) {
-                        try {
-                            const isOriginalDebt = debt.type === 'debt';
+                    if (!debt) return;
+                    const payDebtModal = el('pay-debt-modal');
+                    const isPayingDebt = debt.type === 'debt'; // True jika saya berutang
+                    const modalTitle = isPayingDebt ? 'Bayar Utang' : 'Terima Piutang';
+                    const buttonText = isPayingDebt ? 'Bayar' : 'Terima';
 
-                            const categoryName = isOriginalDebt ? 'Pembayaran Utang' : 'Penerimaan Piutang';
-                            const categoryType = isOriginalDebt ? 'expense' : 'income';
-                            const categoryId = await getOrCreateCategory(categoryName, categoryType);
+                    payDebtModal.innerHTML = `
+                        <form id="pay-debt-form">
+                            <h3 class="text-xl font-bold mb-4">${modalTitle}</h3>
+                            <p class="text-slate-300 mb-1">Kepada/Dari: <strong class="text-white">${debt.person}</strong></p>
+                            <p class="text-slate-300 mb-4">Sisa: <strong class="text-white">${formatCurrency(debt.amount)}</strong></p>
+                            
+                            <%-- BAGIAN BARU DIMULAI --%>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="payment-amount" class="block text-sm font-medium text-slate-300">Jumlah Pembayaran</label>
+                                <button type="button" id="pay-full-btn" class="text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors">Lunasi Langsung</button>
+                            </div>
+                            <%-- BAGIAN BARU SELESAI --%>
 
-                            const transactionData = {
-                                description: isOriginalDebt
-                                    ? `Pelunasan Utang kepada: ${debt.person}`
-                                    : `Penerimaan Pelunasan Piutang dari: ${debt.person}`,
-                                amount: debt.amount,
-                                type: isOriginalDebt ? 'expense' : 'income',
-                                category: categoryId, // Gunakan ID yang didapat
-                                date: serverTimestamp()
-                            };
+                            <input type="number" id="payment-amount" placeholder="Jumlah" class="input-field" min="1" max="${debt.amount}" required>
 
-                            await addDoc(collection(db, `users/${userId}/transactions`), transactionData);
-                            await updateDoc(doc(db, `users/${userId}/debts/${id}`), { isPaid: true });
-                            showNotificationModal('Sukses', 'check_circle', `Catatan untuk ${debt.person} ditandai lunas dan transaksi dicatat.`, 'green');
-                            } catch (err) {
-                                showError('Gagal mencatat transaksi pelunasan.');
-                                console.error(err);
-                            }
-                        } else if (debt) {
-                            await updateDoc(doc(db, `users/${userId}/debts/${id}`), { isPaid: false });
+                            <div class="mt-6 flex justify-end gap-3">
+                                <button type="button" class="btn-cancel-modal btn bg-slate-600">Batal</button>
+                                <button type="submit" class="btn btn-primary">${buttonText}</button>
+                            </div>
+                        </form>`;
+                    
+                    openModal(payDebtModal);
+
+                    payDebtModal.querySelector('#pay-full-btn').onclick = () => {
+                        const amountInput = payDebtModal.querySelector('#payment-amount');
+                        amountInput.value = debt.amount;
+                        amountInput.focus(); // Optional: langsung fokus ke input setelah diisi
+                    };
+
+                    payDebtModal.querySelector('.btn-cancel-modal').onclick = () => closeModal(payDebtModal);
+                    
+                    payDebtModal.querySelector('#pay-debt-form').onsubmit = async (ev) => {
+                        ev.preventDefault();
+                        const paymentAmount = Number(payDebtModal.querySelector('#payment-amount').value);
+                        if (paymentAmount <= 0 || paymentAmount > debt.amount) {
+                            showNotificationModal('Gagal', 'error', 'Jumlah pembayaran tidak valid.', 'red');
+                            return;
                         }
-                    }
+
+                        const submitButton = ev.target.querySelector('button[type="submit"]');
+                        setButtonLoading(submitButton, true);
+
+                        try {
+                            const remainingAmount = debt.amount - paymentAmount;
+                            const isNowPaidInFull = remainingAmount <= 0;
+
+                            const transactionType = isPayingDebt ? 'expense' : 'income';
+                            const categoryName = isPayingDebt ? 'Pembayaran Utang' : 'Penerimaan Piutang';
+                            const categoryId = await getOrCreateCategory(categoryName, transactionType);
+                            const descriptionPrefix = isNowPaidInFull ? 'Pelunasan' : 'Cicilan';
+                            const description = `${descriptionPrefix} ${isPayingDebt ? 'utang kepada' : 'piutang dari'} ${debt.person}`;
+                            
+                            const batch = writeBatch(db);
+
+                            const transactionRef = doc(collection(db, `users/${userId}/transactions`));
+                            batch.set(transactionRef, {
+                                description: description,
+                                amount: paymentAmount,
+                                type: transactionType,
+                                category: categoryId,
+                                date: serverTimestamp()
+                            });
+
+                            const debtRef = doc(db, `users/${userId}/debts/${debt.id}`);
+                            if (isNowPaidInFull) {
+                                batch.update(debtRef, { 
+                                    amount: 0, 
+                                    isPaid: true 
+                                });
+                            } else {
+                                batch.update(debtRef, { 
+                                    amount: increment(-paymentAmount) 
+                                });
+                            }
+
+                            await batch.commit();
+
+                            showNotificationModal('Sukses', 'check_circle', `Pembayaran sebesar ${formatCurrency(paymentAmount)} berhasil dicatat.`, 'green');
+                            closeModal(payDebtModal);
+                        } catch (err) {
+                            console.error('Gagal memproses pembayaran utang:', err);
+                            showError('Gagal memproses pembayaran.');
+                        } finally {
+                            setButtonLoading(submitButton, false);
+                        }
+                    };
+                }
                 }
             }
         );
@@ -3235,7 +3300,7 @@
                         <p class="text-sm ${isDebt ? 'text-red-400' : 'text-green-400'}">${isDebt ? 'Utang Saya' : 'Piutang'}: ${formatCurrency(d.amount)}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        ${d.isPaid ? '<span class="font-bold text-green-400 text-sm">LUNAS</span>' : `<button data-action="toggle-debt-paid" data-id="${d.id}" class="btn btn-secondary text-xs py-1 px-2">Tandai Lunas</button>`}
+                        ${d.isPaid ? '<span class="font-bold text-green-400 text-sm">LUNAS</span>' : `<button data-action="pay-debt" data-id="${d.id}" class="btn btn-secondary text-xs py-1 px-2">Bayar / Terima</button>`}
                     </div>
                 </div>`;
             }).join('');
