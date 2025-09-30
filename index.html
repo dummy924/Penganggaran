@@ -1006,16 +1006,27 @@
             nextMonthBtn.classList.toggle('opacity-50', nextMonthBtn.disabled);
             nextMonthBtn.classList.toggle('cursor-not-allowed', nextMonthBtn.disabled);
             
-            const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            let carryOverAmount = 0;
+            const previousMonthsTransactions = allTransactions.filter(t => new Date(t.date) < startOfMonth);
+            if (previousMonthsTransactions.length > 0) {
+                const prevIncome = previousMonthsTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                const prevExpense = previousMonthsTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                carryOverAmount = prevIncome - prevExpense;
+            }
+
+            const incomeThisMonthOnly = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
             const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-            const balance = income - expenses;
-            const savingRate = income > 0 ? Math.max(0, ((balance / income) * 100)).toFixed(0) : 0;
+
+            const totalIncomeForDisplay = incomeThisMonthOnly + (carryOverAmount > 0 ? carryOverAmount : 0);
+            
+            const balance = totalIncomeForDisplay - expenses;
+            const savingRate = totalIncomeForDisplay > 0 ? Math.max(0, ((balance / totalIncomeForDisplay) * 100)).toFixed(0) : 0;
             
             const totalCashBalance = allTransactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
             const investmentValue = investments.reduce((sum, asset) => sum + (asset.units * (asset.currentPrice || asset.avgPrice)), 0);
             const netWorth = totalCashBalance + investmentValue;
 
-            el('total-income').innerHTML = formatDashboardValue(income);
+            el('total-income').innerHTML = formatDashboardValue(totalIncomeForDisplay);
             el('total-expenses').innerHTML = formatDashboardValue(expenses);
             el('balance').innerHTML = formatDashboardValue(balance);
             el('saving-rate').textContent = `${savingRate}%`;
@@ -1132,9 +1143,9 @@
             const filteredTransactions = getFilteredTransactions();
             transactionCountEl.textContent = `Menampilkan ${filteredTransactions.length} dari ${transactionsForMonth.length} transaksi.`;
             const sorted = [...filteredTransactions].sort((a, b) => sortDirection === 'desc' ? b.date - a.date : a.date - b.date);
-            
+
             selectAllTransactionsCheckbox.checked = sorted.length > 0 && sorted.every(t => selectedTransactions.has(t.id));
-            
+
             listEl.innerHTML = sorted.map(t => {
                 const isIncome = t.type === 'income';
                 const categoryName = categoryMap[t.category] || 'Tanpa Kategori';
